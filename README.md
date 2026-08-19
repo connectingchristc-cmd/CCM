@@ -1,6 +1,6 @@
-# ccm_melodies
+# CCM Melodies
 
-A new Flutter module project.
+A Flutter app for discovering, viewing, and managing Christian songs.
 
 ## Getting Started
 
