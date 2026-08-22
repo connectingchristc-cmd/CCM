@@ -40,8 +40,8 @@ The CCM Melodies app has been completely redesigned with the following improveme
 - Admin icon with decorative circle background
 - Back button to return to welcome screen
 - Credentials remain:
-  - Username: `CCMAdmin`
-  - Password: `CCMAdmin@2026`
+  - Firebase Auth administrator email and password
+  - `admin: true` custom claim
 
 ---
 
@@ -340,8 +340,8 @@ Four expandable sections in card format:
 ### **For Admin:**
 1. Open app → Click "CCM Admin Login"
 2. Enter credentials:
-   - Username: `CCMAdmin`
-   - Password: `CCMAdmin@2026`
+  - Firebase Auth administrator email and password
+  - `admin: true` custom claim
 3. Check "Remember Me" to stay logged in
 4. Access all features including:
    - Add new songs (Songs tab FAB)

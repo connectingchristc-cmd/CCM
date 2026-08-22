@@ -28,8 +28,8 @@ flutter run
 ### **Test Case 2: Admin Login with Remember Me**
 1. Click "CCM Admin Login"
 2. Enter credentials:
-   - Username: `CCMAdmin`
-   - Password: `CCMAdmin@2026`
+   - Firebase Auth administrator email
+   - Firebase Auth password for an account with the `admin: true` claim
 3. **Check "Remember Me" checkbox**
 4. Click "Login"
 5. **Expected**: Access admin app with all features

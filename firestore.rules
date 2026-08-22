@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isMember() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isMember() && request.auth.token.get('admin', false) == true;
+    }
+
+    // Songs rules
+    match /songs/{songId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // Setlists rules
+    match /setlists/{setlistId} {
+      allow read: if isAdmin() || (isMember() && resource.data.published == true);
+      allow write: if isAdmin();
+    }
+
+    // Services collection rules
+    match /services/{serviceId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+
+      // Recursive rule for nested subcollections (e.g., service plans, items)
+      match /{subcollection=**} {
+        allow read: if isMember();
+        allow write: if isAdmin();
+      }
+    }
+
+    // Daily Bread collection rules
+    match /daily_bread/{breadId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -81,12 +81,11 @@ C:\Users\sudha\Desktop\CCM Melodies\ccm_melodies\build\host\outputs\apk\release\
 
 ---
 
-## 🔐 **ADMIN CREDENTIALS**
+## 🔐 **ADMIN ACCESS**
 
-**Username**: `CCMAdmin`  
-**Password**: `CCMAdmin@2026`
-
-⚠️ **IMPORTANT**: Keep these credentials secure. Consider changing them in a future update.
+Administrators sign in through Firebase Authentication using an email and password.
+Admin access is granted only to Firebase Auth users with the `admin: true` custom claim.
+See [SECURITY_SETUP.md](SECURITY_SETUP.md) for provisioning and Firestore Rules deployment.
 
 ---
 
@@ -209,7 +208,7 @@ Before deploying, ensure:
 
 ### Issue: Admin Login Doesn't Work
 **Solution**:
-- Verify credentials: `CCMAdmin` / `CCMAdmin@2026`
+- Verify the administrator Firebase Auth account and its `admin: true` custom claim.
 - Check for typos
 - Ensure CAPS LOCK is not on
 

@@ -30,10 +30,9 @@
    │ - Username field     │      │ (Member Access - No    │
    │ - Password field     │      │  Admin Features)       │
    │ - Remember Me ✓      │      │                        │
-   │ - Credentials:       │      │                        │
-   │   User: CCMAdmin     │      │                        │
-   │   Pass: CCMAdmin@    │      │                        │
-   │         2026         │      │                        │
+   │ - Firebase Auth      │      │                        │
+   │   admin email        │      │                        │
+   │   and password       │      │                        │
    └──────┬───────────────┘      └────────────┬───────────┘
           │                                   │
           │                                   │
@@ -388,8 +387,8 @@ Huge:         32px  - Welcome screen padding
    ├─ Click "CCM Admin Login"
    │
 2. Admin Login Screen
-   ├─ Enter Username: CCMAdmin
-   ├─ Enter Password: CCMAdmin@2026
+   ├─ Enter Firebase Auth admin email
+   ├─ Enter Firebase Auth password
    ├─ Check "Remember Me" (optional)
    └─ Click Login
    │

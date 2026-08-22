@@ -207,9 +207,9 @@
 
 ## 🔐 **AUTHENTICATION & SECURITY**
 
-### **Admin Credentials**
-- Username: `CCMAdmin`
-- Password: `CCMAdmin@2026`
+### **Admin Authentication**
+- Firebase Email/Password Authentication
+- `admin: true` Firebase custom claim required
 
 ### **Authentication Flow**
 - ✅ Form validation
@@ -373,7 +373,7 @@
 
 ### **First Time Setup**
 1. Launch app → Click "CCM Admin Login"
-2. Enter: Username: `CCMAdmin`, Password: `CCMAdmin@2026`
+2. Enter the administrator's Firebase Auth email and password.
 3. Check "Remember Me" to stay logged in
 4. Click Login
 
