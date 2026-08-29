@@ -14,16 +14,11 @@ class PublishedSetlistsScreen extends StatelessWidget {
       builder: (context, _) {
         final published = <Map<String, dynamic>>[];
 
-        for (int i = 0;
-            i < appFeatureStore.setlists.length;
-            i++) {
+        for (int i = 0; i < appFeatureStore.setlists.length; i++) {
           final setlist = appFeatureStore.setlists[i];
 
           if (setlist['published'] == true) {
-            published.add({
-              ...setlist,
-              '_index': i,
-            });
+            published.add({...setlist, '_index': i});
           }
         }
 
@@ -31,89 +26,60 @@ class PublishedSetlistsScreen extends StatelessWidget {
           appBar: AppBar(
             title: const Text(
               'Published Setlists',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            backgroundColor: ccmRed,
+            backgroundColor: ccmSandDark,
+            foregroundColor: ccmInk,
           ),
           body: published.isEmpty
               ? const Center(
                   child: Column(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.public_off,
-                        size: 64,
-                        color: Colors.grey,
-                      ),
+                      Icon(Icons.public_off, size: 64, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
                         'No published setlists yet.',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
                 )
               : ListView.separated(
-                  padding:
-                      const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   itemCount: published.length,
-                  separatorBuilder:
-                      (context, index) =>
-                          const SizedBox(height: 10),
-                  itemBuilder:
-                      (context, index) {
-                    final setlist =
-                        published[index];
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final setlist = published[index];
 
-                    final originalIndex =
-                        setlist['_index'] as int;
+                    final originalIndex = setlist['_index'] as int;
 
                     final songIds =
-                        (setlist['songIds']
-                                as List<dynamic>?)
+                        (setlist['songIds'] as List<dynamic>?)
                             ?.cast<String>() ??
                         <String>[];
 
                     return Card(
                       child: ListTile(
-                        leading:
-                            const CircleAvatar(
+                        leading: const CircleAvatar(
                           backgroundColor: ccmBlue,
-                          child: Icon(
-                            Icons.public,
-                            color: ccmWhite,
-                          ),
+                          child: Icon(Icons.public, color: ccmWhite),
                         ),
                         title: Text(
-                          setlist['name'] ??
-                              'Untitled Setlist',
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                          setlist['name'] ?? 'Untitled Setlist',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           '${songIds.length} song${songIds.length == 1 ? '' : 's'}',
                         ),
-                        trailing:
-                            const Icon(
-                          Icons.chevron_right,
-                        ),
+                        trailing: const Icon(Icons.chevron_right),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      SetlistDetailScreen(
-                                setlistIndex:
-                                    originalIndex,
+                              builder: (context) => SetlistDetailScreen(
+                                setlistIndex: originalIndex,
                               ),
                             ),
                           );

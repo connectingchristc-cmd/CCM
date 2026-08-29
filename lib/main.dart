@@ -129,16 +129,16 @@
 //     await Firebase.initializeApp(
 //       options: DefaultFirebaseOptions.currentPlatform,
 //     );
-    
+
 //     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 //     final messaging = FirebaseMessaging.instance;
-    
+
 //     await messaging.requestPermission(
 //       alert: true,
 //       badge: true,
 //       sound: true,
 //     );
-    
+
 //     await messaging.subscribeToTopic('all_members');
 
 //   } catch (e) {
@@ -388,7 +388,7 @@
 //           message: 'This account is not an administrator.',
 //         );
 //       }
-      
+
 //       await _handleRememberMe();
 
 //       if (!mounted) return;
@@ -2262,7 +2262,7 @@
 // class _LyricViewScreenState extends State<LyricViewScreen> {
 //   late double _fontSize;
 //   int _transpose = 0;
-  
+
 //   late Map<String, dynamic> _currentSong;
 //   late String _currentSongId;
 //   int? _currentIndex;
@@ -2282,7 +2282,7 @@
 //   @override
 //   void didChangeDependencies() {
 //     super.didChangeDependencies();
-    
+
 //     final screenWidth = MediaQuery.of(context).size.width;
 //     if (screenWidth < 350) {
 //       _fontSize = 16.0;
@@ -3641,8 +3641,6 @@
 //   }
 // }
 
-
-
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -3654,9 +3652,7 @@ import 'screens/landing/welcome_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await appFeatureStore.load();
 
@@ -3670,13 +3666,8 @@ class CCMApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Connecting Christ Ministries',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: ccmRed,
-        ),
-        useMaterial3: true,
-      ),
+      title: 'CCM',
+      theme: buildCcmTheme(),
       home: const WelcomeScreen(),
     );
   }

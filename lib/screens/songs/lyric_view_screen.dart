@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
-import '../../core/app_feature_store.dart';
 
 class LyricViewScreen extends StatefulWidget {
   final Map<String, dynamic> song;
@@ -18,12 +17,10 @@ class LyricViewScreen extends StatefulWidget {
   });
 
   @override
-  State<LyricViewScreen> createState() =>
-      _LyricViewScreenState();
+  State<LyricViewScreen> createState() => _LyricViewScreenState();
 }
 
-class _LyricViewScreenState
-    extends State<LyricViewScreen> {
+class _LyricViewScreenState extends State<LyricViewScreen> {
   late double _fontSize;
 
   int _transpose = 0;
@@ -62,8 +59,7 @@ class _LyricViewScreenState
   void didChangeDependencies() {
     super.didChangeDependencies();
 
-    final screenWidth =
-        MediaQuery.of(context).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
 
     if (screenWidth < 350) {
       _fontSize = 16.0;
@@ -75,28 +71,20 @@ class _LyricViewScreenState
   }
 
   String _transposeChords(String chords) {
-    if (_transpose == 0 ||
-        chords.trim().isEmpty) {
+    if (_transpose == 0 || chords.trim().isEmpty) {
       return chords;
     }
 
     return chords.replaceAllMapped(
-      RegExp(
-        r'(?<![A-Za-z])([A-G](?:#|b)?)(m|sus|7|add|dim|aug)?',
-      ),
+      RegExp(r'(?<![A-Za-z])([A-G](?:#|b)?)(m|sus|7|add|dim|aug)?'),
       (match) {
         final root = match.group(1)!;
 
-        final suffix =
-            match.group(2) ?? '';
+        final suffix = match.group(2) ?? '';
 
-        final normalized =
-            root.replaceAll('b', '#');
+        final normalized = root.replaceAll('b', '#');
 
-        final index =
-            _chordNames.indexOf(
-          normalized,
-        );
+        final index = _chordNames.indexOf(normalized);
 
         if (index == -1) {
           return match.group(0)!;
@@ -108,26 +96,21 @@ class _LyricViewScreenState
   }
 
   void _navigateSong(int delta) {
-    if (widget.playlist == null ||
-        _currentIndex == null) {
+    if (widget.playlist == null || _currentIndex == null) {
       return;
     }
 
-    final newIndex =
-        _currentIndex! + delta;
+    final newIndex = _currentIndex! + delta;
 
-    if (newIndex >= 0 &&
-        newIndex < widget.playlist!.length) {
-      final nextSong =
-          widget.playlist![newIndex];
+    if (newIndex >= 0 && newIndex < widget.playlist!.length) {
+      final nextSong = widget.playlist![newIndex];
 
       setState(() {
         _currentIndex = newIndex;
 
         _currentSong = nextSong;
 
-        _currentSongId =
-            nextSong['id']?.toString() ?? '';
+        _currentSongId = nextSong['id']?.toString() ?? '';
 
         _transpose = 0;
       });
@@ -136,118 +119,74 @@ class _LyricViewScreenState
 
   @override
   Widget build(BuildContext context) {
-    final hasPlaylist =
-        widget.playlist != null &&
-        widget.playlist!.length > 1;
+    final hasPlaylist = widget.playlist != null && widget.playlist!.length > 1;
 
-    final canGoPrevious =
-        hasPlaylist &&
-        (_currentIndex ?? 0) > 0;
+    final canGoPrevious = hasPlaylist && (_currentIndex ?? 0) > 0;
 
     final canGoNext =
-        hasPlaylist &&
-        (_currentIndex ?? 0) <
-            widget.playlist!.length - 1;
+        hasPlaylist && (_currentIndex ?? 0) < widget.playlist!.length - 1;
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: true,
 
-        title: Text(
-          _currentSong['title_english'] ??
-              'Lyrics',
-
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+        title: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _currentSong['title_telugu'] ?? 'Lyrics',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            Text(
+              _currentSong['title_english'] ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
         ),
 
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
 
         actions: [
           if (hasPlaylist) ...[
             IconButton(
               tooltip: 'Previous Song',
 
-              icon: const Icon(
-                Icons.arrow_back_ios,
-                size: 18,
-              ),
+              icon: const Icon(Icons.arrow_back_ios, size: 18),
 
-              onPressed:
-                  canGoPrevious
-                      ? () => _navigateSong(-1)
-                      : null,
+              onPressed: canGoPrevious ? () => _navigateSong(-1) : null,
             ),
 
             IconButton(
               tooltip: 'Next Song',
 
-              icon: const Icon(
-                Icons.arrow_forward_ios,
-                size: 18,
-              ),
+              icon: const Icon(Icons.arrow_forward_ios, size: 18),
 
-              onPressed:
-                  canGoNext
-                      ? () => _navigateSong(1)
-                      : null,
+              onPressed: canGoNext ? () => _navigateSong(1) : null,
             ),
           ],
 
           IconButton(
-            tooltip: 'Favorite song',
-
-            icon: Icon(
-              appFeatureStore.isFavorite(
-                _currentSongId,
-              )
-                  ? Icons.favorite
-                  : Icons.favorite_outline,
-            ),
-
-            onPressed: () async {
-              await appFeatureStore
-                  .toggleFavorite(
-                _currentSongId,
-              );
-
-              if (mounted) {
-                setState(() {});
-              }
-            },
-          ),
-
-          IconButton(
-            icon: const Icon(
-              Icons.text_decrease,
-            ),
+            icon: const Icon(Icons.text_decrease),
 
             onPressed: () {
               setState(() {
-                _fontSize =
-                    (_fontSize - 2)
-                        .clamp(
-                          14.0,
-                          32.0,
-                        );
+                _fontSize = (_fontSize - 2).clamp(14.0, 32.0);
               });
             },
           ),
 
           IconButton(
-            icon: const Icon(
-              Icons.text_increase,
-            ),
+            icon: const Icon(Icons.text_increase),
 
             onPressed: () {
               setState(() {
-                _fontSize =
-                    (_fontSize + 2)
-                        .clamp(
-                          14.0,
-                          32.0,
-                        );
+                _fontSize = (_fontSize + 2).clamp(14.0, 32.0);
               });
             },
           ),
@@ -259,58 +198,44 @@ class _LyricViewScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              ccmRed.withValues(
-                alpha: 0.05,
-              ),
-              ccmWhite,
-            ],
+            colors: [ccmSandDark.withValues(alpha: 0.35), ccmSand],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
 
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
 
             children: [
               Text(
-                _currentSong[
-                        'title_telugu'] ??
-                    '',
-
+                _currentSong['title_telugu'] ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight:
-                      FontWeight.bold,
-                  color:
-                      Color(0xFF1a1a1a),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1a1a1a),
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               Text(
-                _currentSong[
-                        'title_english'] ??
-                    '',
-
+                _currentSong['title_english'] ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 16,
-                  color:
-                      Color(0xFF404040),
-                  fontStyle:
-                      FontStyle.italic,
+                  color: Color(0xFF404040),
+                  fontStyle: FontStyle.italic,
                 ),
               ),
 
               const SizedBox(height: 24),
 
-              if ((_currentSong['chords'] ??
-                      '')
+              if ((_currentSong['chords'] ?? '')
                   .toString()
                   .trim()
                   .isNotEmpty) ...[
@@ -321,80 +246,51 @@ class _LyricViewScreenState
                     Text(
                       'Key: ${_currentSong['key'] ?? 'Original'}',
 
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
 
                     const Spacer(),
 
                     IconButton(
-                      tooltip:
-                          'Transpose down',
+                      tooltip: 'Transpose down',
 
                       onPressed: () {
                         setState(() {
-                          _transpose =
-                              (_transpose - 1)
-                                  .clamp(
-                            -11,
-                            11,
-                          );
+                          _transpose = (_transpose - 1).clamp(-11, 11);
                         });
                       },
 
-                      icon: const Icon(
-                        Icons.keyboard_arrow_down,
-                      ),
+                      icon: const Icon(Icons.keyboard_arrow_down),
                     ),
 
                     Text(
                       '${_transpose >= 0 ? '+' : ''}$_transpose',
 
-                      style:
-                          const TextStyle(
-                        fontWeight:
-                            FontWeight.bold,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
 
                     IconButton(
-                      tooltip:
-                          'Transpose up',
+                      tooltip: 'Transpose up',
 
                       onPressed: () {
                         setState(() {
-                          _transpose =
-                              (_transpose + 1)
-                                  .clamp(
-                            -11,
-                            11,
-                          );
+                          _transpose = (_transpose + 1).clamp(-11, 11);
                         });
                       },
 
-                      icon: const Icon(
-                        Icons.keyboard_arrow_up,
-                      ),
+                      icon: const Icon(Icons.keyboard_arrow_up),
                     ),
                   ],
                 ),
 
                 SelectableText(
-                  _transposeChords(
-                    _currentSong[
-                            'chords']
-                        .toString(),
-                  ),
+                  _transposeChords(_currentSong['chords'].toString()),
 
                   style: TextStyle(
                     fontSize: _fontSize,
                     height: 1.8,
                     color: ccmBlue,
-                    fontWeight:
-                        FontWeight.w600,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -402,18 +298,13 @@ class _LyricViewScreenState
               const SizedBox(height: 16),
 
               SelectableText(
-                _currentSong['lyrics'] ??
-                    '',
+                _currentSong['lyrics'] ?? '',
 
                 style: TextStyle(
                   fontSize: _fontSize,
                   height: 1.8,
-                  color:
-                      const Color(
-                    0xFF1a1a1a,
-                  ),
-                  fontWeight:
-                      FontWeight.w500,
+                  color: const Color(0xFF1a1a1a),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
 
@@ -423,22 +314,18 @@ class _LyricViewScreenState
         ),
       ),
 
-      floatingActionButton:
-          FloatingActionButton(
-        backgroundColor: ccmRed,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
 
         onPressed: () {
           Navigator.pop(context);
         },
 
-        child: const Icon(
-          Icons.arrow_back,
-          color: ccmWhite,
-        ),
+        child: const Icon(Icons.arrow_back, color: ccmWhite),
       ),
 
-      floatingActionButtonLocation:
-          FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 }

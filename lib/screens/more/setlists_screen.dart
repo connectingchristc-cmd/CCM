@@ -9,31 +9,24 @@ class SetlistsScreen extends StatefulWidget {
   const SetlistsScreen({super.key});
 
   @override
-  State<SetlistsScreen> createState() =>
-      _SetlistsScreenState();
+  State<SetlistsScreen> createState() => _SetlistsScreenState();
 }
 
-class _SetlistsScreenState
-    extends State<SetlistsScreen> {
+class _SetlistsScreenState extends State<SetlistsScreen> {
   Future<void> _createSetlist() async {
-    final controller =
-        TextEditingController();
+    final controller = TextEditingController();
 
     final name = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Create Setlist',
-          ),
+          title: const Text('Create Setlist'),
           content: TextField(
             controller: controller,
             autofocus: true,
-            decoration:
-                const InputDecoration(
+            decoration: const InputDecoration(
               labelText: 'Setlist Name',
-              hintText:
-                  'e.g. Sunday Worship',
+              hintText: 'e.g. Sunday Worship',
             ),
           ),
           actions: [
@@ -44,27 +37,15 @@ class _SetlistsScreenState
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              style:
-                  ElevatedButton.styleFrom(
-                backgroundColor: ccmRed,
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: ccmRed),
               onPressed: () {
-                final value =
-                    controller.text.trim();
+                final value = controller.text.trim();
 
                 if (value.isNotEmpty) {
-                  Navigator.pop(
-                    context,
-                    value,
-                  );
+                  Navigator.pop(context, value);
                 }
               },
-              child: const Text(
-                'Create',
-                style: TextStyle(
-                  color: ccmWhite,
-                ),
-              ),
+              child: const Text('Create', style: TextStyle(color: ccmWhite)),
             ),
           ],
         );
@@ -87,61 +68,35 @@ class _SetlistsScreenState
 
     if (!mounted) return;
 
-    final index =
-        appFeatureStore.setlists.length - 1;
+    final index = appFeatureStore.setlists.length - 1;
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            SetlistDetailScreen(
-          setlistIndex: index,
-        ),
+        builder: (context) => SetlistDetailScreen(setlistIndex: index),
       ),
     );
   }
 
-  Future<void> _deleteSetlist(
-    int index,
-  ) async {
-    final setlist =
-        appFeatureStore.setlists[index];
+  Future<void> _deleteSetlist(int index) async {
+    final setlist = appFeatureStore.setlists[index];
 
-    final name =
-        setlist['name'] ?? 'Setlist';
+    final name = setlist['name'] ?? 'Setlist';
 
-    final confirmed =
-        await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title:
-              const Text('Delete Setlist'),
-          content: Text(
-            'Are you sure you want to delete "$name"?',
-          ),
+          title: const Text('Delete Setlist'),
+          content: Text('Are you sure you want to delete "$name"?'),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                false,
-              ),
-              child:
-                  const Text('Cancel'),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(
-                context,
-                true,
-              ),
-              child: const Text(
-                'Delete',
-                style: TextStyle(
-                  color: Colors.red,
-                ),
-              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -170,24 +125,18 @@ class _SetlistsScreenState
           appBar: AppBar(
             title: const Text(
               'Worship Setlists',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
             backgroundColor: ccmRed,
             actions: [
               IconButton(
-                tooltip:
-                    'Published Setlists',
-                icon: const Icon(
-                  Icons.public,
-                ),
+                tooltip: 'Published Setlists',
+                icon: const Icon(Icons.public),
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const PublishedSetlistsScreen(),
+                      builder: (context) => const PublishedSetlistsScreen(),
                     ),
                   );
                 },
@@ -195,154 +144,88 @@ class _SetlistsScreenState
             ],
           ),
 
-          body: appFeatureStore
-                  .setlists.isEmpty
+          body: appFeatureStore.setlists.isEmpty
               ? Center(
                   child: Column(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.playlist_play,
                         size: 72,
-                        color:
-                            Colors.grey[300],
+                        color: Colors.grey[300],
                       ),
-                      const SizedBox(
-                        height: 16,
-                      ),
+                      const SizedBox(height: 16),
                       const Text(
                         'No setlists yet',
                         style: TextStyle(
                           fontSize: 18,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(
-                        height: 8,
-                      ),
-                      const Text(
-                        'Create a worship setlist to get started.',
-                      ),
-                      const SizedBox(
-                        height: 24,
-                      ),
+                      const SizedBox(height: 8),
+                      const Text('Create a worship setlist to get started.'),
+                      const SizedBox(height: 24),
                       ElevatedButton.icon(
-                        style:
-                            ElevatedButton
-                                .styleFrom(
-                          backgroundColor:
-                              ccmRed,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: ccmRed,
                         ),
-                        onPressed:
-                            _createSetlist,
-                        icon: const Icon(
-                          Icons.add,
-                          color: ccmWhite,
-                        ),
+                        onPressed: _createSetlist,
+                        icon: const Icon(Icons.add, color: ccmWhite),
                         label: const Text(
                           'Create Setlist',
-                          style: TextStyle(
-                            color:
-                                ccmWhite,
-                          ),
+                          style: TextStyle(color: ccmWhite),
                         ),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding:
-                      const EdgeInsets.all(
-                    16,
-                  ),
-                  itemCount:
-                      appFeatureStore
-                          .setlists.length,
-                  itemBuilder:
-                      (context, index) {
-                    final setlist =
-                        appFeatureStore
-                            .setlists[index];
+                  padding: const EdgeInsets.all(16),
+                  itemCount: appFeatureStore.setlists.length,
+                  itemBuilder: (context, index) {
+                    final setlist = appFeatureStore.setlists[index];
 
-                    final name =
-                        setlist['name'] ??
-                            'Untitled Setlist';
+                    final name = setlist['name'] ?? 'Untitled Setlist';
 
                     final songIds =
-                        (setlist['songIds']
-                                as List<dynamic>?)
+                        (setlist['songIds'] as List<dynamic>?)
                             ?.cast<String>() ??
                         <String>[];
 
-                    final published =
-                        setlist['published'] ==
-                            true;
+                    final published = setlist['published'] == true;
 
                     return Card(
-                      margin:
-                          const EdgeInsets.only(
-                        bottom: 12,
-                      ),
+                      margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        leading:
-                            CircleAvatar(
-                          backgroundColor:
-                              published
-                                  ? ccmBlue
-                                  : ccmRed,
+                        leading: CircleAvatar(
+                          backgroundColor: published ? ccmBlue : ccmRed,
                           child: Icon(
-                            published
-                                ? Icons.public
-                                : Icons
-                                    .playlist_play,
+                            published ? Icons.public : Icons.playlist_play,
                             color: ccmWhite,
                           ),
                         ),
                         title: Text(
                           name,
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
                           '${songIds.length} song${songIds.length == 1 ? '' : 's'}'
                           '${published ? ' • Published' : ''}',
                         ),
-                        trailing:
-                            PopupMenuButton<
-                                String>(
-                          onSelected:
-                              (value) {
-                            if (value ==
-                                'delete') {
-                              _deleteSetlist(
-                                index,
-                              );
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (value) {
+                            if (value == 'delete') {
+                              _deleteSetlist(index);
                             }
                           },
-                          itemBuilder:
-                              (context) => [
+                          itemBuilder: (context) => [
                             const PopupMenuItem(
-                              value:
-                                  'delete',
+                              value: 'delete',
                               child: Row(
                                 children: [
-                                  Icon(
-                                    Icons
-                                        .delete,
-                                    color:
-                                        Colors.red,
-                                  ),
-                                  SizedBox(
-                                    width: 8,
-                                  ),
-                                  Text(
-                                    'Delete',
-                                  ),
+                                  Icon(Icons.delete, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
                                 ],
                               ),
                             ),
@@ -352,12 +235,8 @@ class _SetlistsScreenState
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      SetlistDetailScreen(
-                                setlistIndex:
-                                    index,
-                              ),
+                              builder: (context) =>
+                                  SetlistDetailScreen(setlistIndex: index),
                             ),
                           );
                         },
@@ -366,20 +245,11 @@ class _SetlistsScreenState
                   },
                 ),
 
-          floatingActionButton:
-              FloatingActionButton.extended(
+          floatingActionButton: FloatingActionButton.extended(
             backgroundColor: ccmRed,
             onPressed: _createSetlist,
-            icon: const Icon(
-              Icons.add,
-              color: ccmWhite,
-            ),
-            label: const Text(
-              'New Setlist',
-              style: TextStyle(
-                color: ccmWhite,
-              ),
-            ),
+            icon: const Icon(Icons.add, color: ccmWhite),
+            label: const Text('New Setlist', style: TextStyle(color: ccmWhite)),
           ),
         );
       },

@@ -8,22 +8,17 @@ class AddDailyBreadScreen extends StatefulWidget {
   const AddDailyBreadScreen({super.key});
 
   @override
-  State<AddDailyBreadScreen> createState() =>
-      _AddDailyBreadScreenState();
+  State<AddDailyBreadScreen> createState() => _AddDailyBreadScreenState();
 }
 
-class _AddDailyBreadScreenState
-    extends State<AddDailyBreadScreen> {
+class _AddDailyBreadScreenState extends State<AddDailyBreadScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _verseController =
-      TextEditingController();
+  final _verseController = TextEditingController();
 
-  final _referenceController =
-      TextEditingController();
+  final _referenceController = TextEditingController();
 
-  final _imageUrlController =
-      TextEditingController();
+  final _imageUrlController = TextEditingController();
 
   bool _isSubmitting = false;
   bool _sendNotification = false;
@@ -38,21 +33,15 @@ class _AddDailyBreadScreenState
     });
 
     try {
-      final verse =
-          _verseController.text.trim();
+      final verse = _verseController.text.trim();
 
-      final ref =
-          _referenceController.text.trim();
+      final ref = _referenceController.text.trim();
 
-      await FirebaseFirestore.instance
-          .collection('daily_bread')
-          .add({
+      await FirebaseFirestore.instance.collection('daily_bread').add({
         'verse': verse,
         'reference': ref,
-        'imageUrl':
-            _imageUrlController.text.trim(),
-        'created_at':
-            FieldValue.serverTimestamp(),
+        'imageUrl': _imageUrlController.text.trim(),
+        'created_at': FieldValue.serverTimestamp(),
       });
 
       if (_sendNotification) {
@@ -64,12 +53,9 @@ class _AddDailyBreadScreenState
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Daily Bread added successfully!',
-            ),
+            content: Text('Daily Bread added successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -78,12 +64,9 @@ class _AddDailyBreadScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Error adding Daily Bread: $e',
-            ),
+            content: Text('Error adding Daily Bread: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,9 +95,7 @@ class _AddDailyBreadScreenState
       appBar: AppBar(
         title: const Text(
           'Add Daily Bread',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: ccmBlue,
       ),
@@ -124,16 +105,12 @@ class _AddDailyBreadScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              ccmBlue.withValues(alpha: 0.05),
-              ccmWhite,
-            ],
+            colors: [ccmBlue.withValues(alpha: 0.05), ccmWhite],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
 
           child: Form(
             key: _formKey,
@@ -141,46 +118,30 @@ class _AddDailyBreadScreenState
             child: Column(
               children: [
                 TextFormField(
-                  controller:
-                      _verseController,
+                  controller: _verseController,
 
                   maxLines: 6,
 
-                  decoration:
-                      InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Bible Verse',
 
-                    hintText:
-                        'Enter the bible verse text...',
+                    hintText: 'Enter the bible verse text...',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmBlue,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmBlue, width: 2),
                     ),
 
                     alignLabelWithHint: true,
                   ),
 
                   validator: (val) {
-                    if (val == null ||
-                        val.isEmpty) {
+                    if (val == null || val.isEmpty) {
                       return 'Required';
                     }
 
@@ -191,49 +152,28 @@ class _AddDailyBreadScreenState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                      _referenceController,
+                  controller: _referenceController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Bible Reference',
+                  decoration: InputDecoration(
+                    labelText: 'Bible Reference',
 
-                    hintText:
-                        'e.g., John 3:16',
+                    hintText: 'e.g., John 3:16',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmBlue,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmBlue, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.book,
-                      color: ccmBlue,
-                    ),
+                    prefixIcon: const Icon(Icons.book, color: ccmBlue),
                   ),
 
                   validator: (val) {
-                    if (val == null ||
-                        val.isEmpty) {
+                    if (val == null || val.isEmpty) {
                       return 'Required';
                     }
 
@@ -244,44 +184,24 @@ class _AddDailyBreadScreenState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                      _imageUrlController,
+                  controller: _imageUrlController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Image URL (Optional)',
+                  decoration: InputDecoration(
+                    labelText: 'Image URL (Optional)',
 
-                    hintText:
-                        'https://example.com/image.jpg',
+                    hintText: 'https://example.com/image.jpg',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmBlue,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmBlue, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.image,
-                      color: ccmBlue,
-                    ),
+                    prefixIcon: const Icon(Icons.image, color: ccmBlue),
                   ),
                 ),
 
@@ -292,23 +212,16 @@ class _AddDailyBreadScreenState
 
                   onChanged: (val) {
                     setState(() {
-                      _sendNotification =
-                          val ?? false;
+                      _sendNotification = val ?? false;
                     });
                   },
 
-                  title: const Text(
-                    'Send notification to members',
-                  ),
+                  title: const Text('Send notification to members'),
 
                   activeColor: ccmBlue,
 
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      8,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
 
@@ -319,48 +232,33 @@ class _AddDailyBreadScreenState
                   height: 50,
 
                   child: ElevatedButton.icon(
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          ccmBlue,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ccmBlue,
 
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                          12,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
 
-                    onPressed: _isSubmitting
-                        ? null
-                        : _submitDailyBread,
+                    onPressed: _isSubmitting ? null : _submitDailyBread,
 
                     icon: _isSubmitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child:
-                                CircularProgressIndicator(
+                            child: CircularProgressIndicator(
                               color: ccmWhite,
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(
-                            Icons.save,
-                          ),
+                        : const Icon(Icons.save),
 
                     label: Text(
-                      _isSubmitting
-                          ? 'Saving...'
-                          : 'Add Daily Bread',
+                      _isSubmitting ? 'Saving...' : 'Add Daily Bread',
 
-                      style:
-                          const TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                         color: ccmWhite,
                       ),
                     ),

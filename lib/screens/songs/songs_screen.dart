@@ -11,18 +11,13 @@ import 'lyric_view_screen.dart';
 class SongsScreen extends StatefulWidget {
   final bool isAdmin;
 
-  const SongsScreen({
-    super.key,
-    required this.isAdmin,
-  });
+  const SongsScreen({super.key, required this.isAdmin});
 
   @override
-  State<SongsScreen> createState() =>
-      _SongsScreenState();
+  State<SongsScreen> createState() => _SongsScreenState();
 }
 
-class _SongsScreenState
-    extends State<SongsScreen> {
+class _SongsScreenState extends State<SongsScreen> {
   String _searchQuery = '';
   bool _favoritesOnly = false;
 
@@ -33,25 +28,21 @@ class _SongsScreenState
         automaticallyImplyLeading: false,
         title: const Text(
           'Songs',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
         elevation: 0,
         actions: [
           IconButton(
             tooltip: 'Show favorites',
             icon: Icon(
-              _favoritesOnly
-                  ? Icons.favorite
-                  : Icons.favorite_outline,
+              _favoritesOnly ? Icons.favorite : Icons.favorite_outline,
             ),
             onPressed: () {
               setState(() {
-                _favoritesOnly =
-                    !_favoritesOnly;
+                _favoritesOnly = !_favoritesOnly;
               });
             },
           ),
@@ -63,41 +54,25 @@ class _SongsScreenState
           return Column(
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(12.0),
                 child: TextField(
                   decoration: InputDecoration(
-                    hintText:
-                        'Search songs (Telugu or English)...',
-                    prefixIcon: const Icon(
-                      Icons.search,
-                      color: ccmRed,
-                    ),
+                    hintText: 'Search songs (Telugu or English)...',
+                    prefixIcon: const Icon(Icons.search, color: ccmRed),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: ccmRed),
                     ),
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(12),
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
                     filled: true,
                     fillColor: ccmLightGray,
                   ),
                   onChanged: (value) {
                     setState(() {
-                      _searchQuery =
-                          value.trim().toLowerCase();
+                      _searchQuery = value.trim().toLowerCase();
                     });
                   },
                 ),
@@ -107,117 +82,73 @@ class _SongsScreenState
                 child: Firebase.apps.isEmpty
                     ? _buildCachedSongs()
                     : StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore
-                            .instance
+                        stream: FirebaseFirestore.instance
                             .collection('songs')
-                            .orderBy(
-                              'title_english',
-                            )
+                            .orderBy('title_english')
                             .snapshots(),
-                        builder: (
-                          context,
-                          snapshot,
-                        ) {
+                        builder: (context, snapshot) {
                           if (snapshot.hasError) {
                             return _buildCachedSongs();
                           }
 
-                          if (snapshot
-                                  .connectionState ==
+                          if (snapshot.connectionState ==
                               ConnectionState.waiting) {
                             return const Center(
-                              child:
-                                  CircularProgressIndicator(),
+                              child: CircularProgressIndicator(),
                             );
                           }
 
-                          final docs =
-                              snapshot.data?.docs ?? [];
+                          final docs = snapshot.data?.docs ?? [];
 
                           if (docs.isNotEmpty) {
-                            appFeatureStore
-                                .cacheSongs(docs);
+                            appFeatureStore.cacheSongs(docs);
                           }
 
-                          final filtered =
-                              docs.where((doc) {
-                            final data =
-                                doc.data()
-                                    as Map<String, dynamic>;
+                          final filtered = docs.where((doc) {
+                            final data = doc.data() as Map<String, dynamic>;
 
-                            final eng =
-                                (data[
-                                            'title_english'] ??
-                                        '')
-                                    .toString()
-                                    .toLowerCase();
+                            final eng = (data['title_english'] ?? '')
+                                .toString()
+                                .toLowerCase();
 
-                            final tel =
-                                (data[
-                                            'title_telugu'] ??
-                                        '')
-                                    .toString()
-                                    .toLowerCase();
+                            final tel = (data['title_telugu'] ?? '')
+                                .toString()
+                                .toLowerCase();
 
-                            final lyrics =
-                                (data['lyrics'] ??
-                                        '')
-                                    .toString()
-                                    .toLowerCase();
+                            final lyrics = (data['lyrics'] ?? '')
+                                .toString()
+                                .toLowerCase();
 
-                            return (
-                                  eng.contains(
-                                    _searchQuery,
-                                  ) ||
-                                  tel.contains(
-                                    _searchQuery,
-                                  ) ||
-                                  lyrics.contains(
-                                    _searchQuery,
-                                  )
-                                ) &&
-                                (
-                                  !_favoritesOnly ||
-                                  appFeatureStore
-                                      .isFavorite(
-                                    doc.id,
-                                  )
-                                );
+                            return (eng.contains(_searchQuery) ||
+                                    tel.contains(_searchQuery) ||
+                                    lyrics.contains(_searchQuery)) &&
+                                (!_favoritesOnly ||
+                                    appFeatureStore.isFavorite(doc.id));
                           }).toList();
 
-                          final songList =
-                              filtered.map((doc) {
+                          final songList = filtered.map((doc) {
                             return <String, dynamic>{
                               'id': doc.id,
-                              ...(doc.data()
-                                  as Map<String, dynamic>),
+                              ...(doc.data() as Map<String, dynamic>),
                             };
                           }).toList();
 
                           return Column(
                             children: [
                               Container(
-                                padding:
-                                    const EdgeInsets
-                                        .symmetric(
+                                padding: const EdgeInsets.symmetric(
                                   vertical: 8,
                                   horizontal: 16,
                                 ),
-                                color:
-                                    ccmRed.withValues(
-                                  alpha: 0.1,
-                                ),
+                                color: ccmRed.withValues(alpha: 0.1),
                                 child: Row(
                                   mainAxisAlignment:
-                                      MainAxisAlignment
-                                          .spaceBetween,
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       'Total Songs: ${filtered.length}',
-                                      style:
-                                          const TextStyle(
-                                        fontWeight:
-                                            FontWeight.bold,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
                                         color: ccmRed,
                                         fontSize: 14,
                                       ),
@@ -225,11 +156,9 @@ class _SongsScreenState
                                     if (_favoritesOnly)
                                       const Text(
                                         '(Filtered Favorites)',
-                                        style:
-                                            TextStyle(
+                                        style: TextStyle(
                                           fontSize: 12,
-                                          color:
-                                              Colors.grey,
+                                          color: Colors.grey,
                                         ),
                                       ),
                                   ],
@@ -239,139 +168,58 @@ class _SongsScreenState
                               Expanded(
                                 child: filtered.isEmpty
                                     ? const Center(
-                                        child: Text(
-                                          'No songs found',
-                                        ),
+                                        child: Text('No songs found'),
                                       )
                                     : ListView.separated(
-                                        itemCount:
-                                            filtered.length,
-                                        separatorBuilder:
-                                            (
-                                          context,
-                                          index,
-                                        ) =>
-                                            const Divider(
-                                          height: 1,
-                                        ),
-                                        itemBuilder:
-                                            (
-                                          context,
-                                          index,
-                                        ) {
-                                          final songDoc =
-                                              filtered[index];
+                                        itemCount: filtered.length,
+                                        separatorBuilder: (context, index) =>
+                                            const Divider(height: 1),
+                                        itemBuilder: (context, index) {
+                                          final songDoc = filtered[index];
 
                                           final song =
                                               songDoc.data()
-                                                  as Map<
-                                                      String,
-                                                      dynamic>;
-
-                                          final isFav =
-                                              appFeatureStore
-                                                  .isFavorite(
-                                            songDoc.id,
-                                          );
+                                                  as Map<String, dynamic>;
 
                                           return ListTile(
-                                            leading:
-                                                CircleAvatar(
-                                              backgroundColor:
-                                                  ccmRed,
-                                              child:
-                                                  Text(
-                                                (song[
-                                                            'title_english'] ??
-                                                        'A')
-                                                    .toString()
-                                                    .isNotEmpty
-                                                    ? (song[
-                                                                'title_english'] ??
-                                                            'A')
-                                                        .toString()[0]
-                                                        .toUpperCase()
-                                                    : 'A',
-                                                style:
-                                                    const TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.bold,
-                                                  color:
-                                                      ccmWhite,
-                                                ),
-                                              ),
-                                            ),
-
                                             title: Text(
-                                              song[
-                                                      'title_telugu'] ??
-                                                  '',
-                                              style:
-                                                  const TextStyle(
+                                              song['title_telugu'] ?? '',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
                                                 fontSize: 16,
-                                                fontWeight:
-                                                    FontWeight.w600,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
 
                                             subtitle: Text(
-                                              song[
-                                                      'title_english'] ??
-                                                  '',
-                                            ),
-
-                                            trailing:
-                                                IconButton(
-                                              icon: Icon(
-                                                isFav
-                                                    ? Icons
-                                                        .favorite
-                                                    : Icons
-                                                        .favorite_outline,
-                                                color: isFav
-                                                    ? ccmRed
-                                                    : Colors.grey,
-                                              ),
-                                              onPressed:
-                                                  () {
-                                                appFeatureStore
-                                                    .toggleFavorite(
-                                                  songDoc.id,
-                                                );
-                                              },
+                                              song['title_english'] ?? '',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
 
                                             onTap: () {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder:
-                                                      (
-                                                    context,
-                                                  ) =>
+                                                  builder: (context) =>
                                                       LyricViewScreen(
-                                                    songId:
-                                                        songDoc.id,
-                                                    song:
-                                                        song,
-                                                    playlist:
-                                                        songList,
-                                                    currentIndex:
-                                                        index,
-                                                  ),
+                                                        songId: songDoc.id,
+                                                        song: song,
+                                                        playlist: songList,
+                                                        currentIndex: index,
+                                                      ),
                                                 ),
                                               );
                                             },
 
-                                            onLongPress:
-                                                widget.isAdmin
-                                                    ? () =>
-                                                        _showSongOptions(
-                                                          context,
-                                                          songDoc.id,
-                                                          song,
-                                                        )
-                                                    : null,
+                                            onLongPress: widget.isAdmin
+                                                ? () => _showSongOptions(
+                                                    context,
+                                                    songDoc.id,
+                                                    song,
+                                                  )
+                                                : null,
                                           );
                                         },
                                       ),
@@ -395,8 +243,7 @@ class _SongsScreenState
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const AddSongScreen(),
+                    builder: (context) => const AddSongScreen(),
                   ),
                 );
               },
@@ -406,52 +253,29 @@ class _SongsScreenState
   }
 
   Widget _buildCachedSongs() {
-    final cached =
-        appFeatureStore.cachedSongs.values
-            .where((song) {
+    final cached = appFeatureStore.cachedSongs.values.where((song) {
       final query = _searchQuery;
 
-      final eng =
-          (song['title_english'] ?? '')
-              .toString()
-              .toLowerCase();
+      final eng = (song['title_english'] ?? '').toString().toLowerCase();
 
-      final tel =
-          (song['title_telugu'] ?? '')
-              .toString()
-              .toLowerCase();
+      final tel = (song['title_telugu'] ?? '').toString().toLowerCase();
 
-      final lyrics =
-          (song['lyrics'] ?? '')
-              .toString()
-              .toLowerCase();
+      final lyrics = (song['lyrics'] ?? '').toString().toLowerCase();
 
-      return (
-            eng.contains(query) ||
-            tel.contains(query) ||
-            lyrics.contains(query)
-          ) &&
-          (
-            !_favoritesOnly ||
-            appFeatureStore.isFavorite(
-              song['id'].toString(),
-            )
-          );
+      return (eng.contains(query) ||
+              tel.contains(query) ||
+              lyrics.contains(query)) &&
+          (!_favoritesOnly ||
+              appFeatureStore.isFavorite(song['id'].toString()));
     }).toList();
 
     return Column(
       children: [
         Container(
-          padding:
-              const EdgeInsets.symmetric(
-            vertical: 8,
-            horizontal: 16,
-          ),
-          color:
-              ccmRed.withValues(alpha: 0.1),
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+          color: ccmRed.withValues(alpha: 0.1),
           child: Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Total Songs: ${cached.length}',
@@ -476,79 +300,36 @@ class _SongsScreenState
               : ListView.separated(
                   itemCount: cached.length,
 
-                  separatorBuilder:
-                      (
-                    context,
-                    index,
-                  ) =>
-                          const Divider(
-                    height: 1,
-                  ),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
 
-                  itemBuilder:
-                      (
-                    context,
-                    index,
-                  ) {
-                    final song =
-                        cached[index];
+                  itemBuilder: (context, index) {
+                    final song = cached[index];
 
-                    final id =
-                        song['id'].toString();
-
-                    final isFav =
-                        appFeatureStore
-                            .isFavorite(id);
+                    final id = song['id'].toString();
 
                     return ListTile(
-                      leading:
-                          const CircleAvatar(
-                        backgroundColor:
-                            ccmRed,
-                        child: Icon(
-                          Icons.music_note,
-                          color: ccmWhite,
-                        ),
-                      ),
-
                       title: Text(
-                        song[
-                                'title_telugu'] ??
-                            '',
+                        song['title_telugu'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
 
                       subtitle: Text(
-                        song[
-                                'title_english'] ??
-                            '',
-                      ),
-
-                      trailing:
-                          IconButton(
-                        icon: Icon(
-                          isFav
-                              ? Icons.favorite
-                              : Icons
-                                  .favorite_outline,
-                          color: isFav
-                              ? ccmRed
-                              : Colors.grey,
-                        ),
-                        onPressed: () {
-                          appFeatureStore
-                              .toggleFavorite(id);
-                        },
+                        song['title_english'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
 
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (
-                              context,
-                            ) =>
-                                LyricViewScreen(
+                            builder: (context) => LyricViewScreen(
                               songId: id,
                               song: song,
                               playlist: cached,
@@ -572,36 +353,21 @@ class _SongsScreenState
   ) {
     showModalBottomSheet(
       context: context,
-      builder: (context) =>
-          Container(
-        padding:
-            const EdgeInsets.symmetric(
-          vertical: 20,
-          horizontal: 16,
-        ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              song['title_english'] ??
-                  'Song',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight:
-                    FontWeight.bold,
-              ),
+              song['title_english'] ?? 'Song',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 20),
 
             ListTile(
-              leading: const Icon(
-                Icons.edit,
-                color: ccmBlue,
-              ),
-              title:
-                  const Text('Edit Song'),
+              leading: const Icon(Icons.edit, color: ccmBlue),
+              title: const Text('Edit Song'),
               onTap: () {
                 Navigator.pop(context);
 
@@ -609,31 +375,19 @@ class _SongsScreenState
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        EditSongScreen(
-                      songId: songId,
-                      song: song,
-                    ),
+                        EditSongScreen(songId: songId, song: song),
                   ),
                 );
               },
             ),
 
             ListTile(
-              leading: const Icon(
-                Icons.delete,
-                color: Colors.red,
-              ),
-              title:
-                  const Text('Delete Song'),
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Song'),
               onTap: () {
                 Navigator.pop(context);
 
-                _deleteSong(
-                  context,
-                  songId,
-                  song['title_english'] ??
-                      'Song',
-                );
+                _deleteSong(context, songId, song['title_english'] ?? 'Song');
               },
             ),
           ],
@@ -642,35 +396,24 @@ class _SongsScreenState
     );
   }
 
-  void _deleteSong(
-    BuildContext context,
-    String songId,
-    String songTitle,
-  ) {
+  void _deleteSong(BuildContext context, String songId, String songTitle) {
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-        title:
-            const Text('Delete Song'),
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Song'),
 
-        content: Text(
-          'Are you sure you want to delete "$songTitle"?',
-        ),
+        content: Text('Are you sure you want to delete "$songTitle"?'),
 
         actions: [
           TextButton(
-            onPressed: () =>
-                Navigator.pop(context),
-            child:
-                const Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
 
           TextButton(
             onPressed: () async {
               try {
-                await FirebaseFirestore
-                    .instance
+                await FirebaseFirestore.instance
                     .collection('songs')
                     .doc(songId)
                     .delete();
@@ -681,14 +424,10 @@ class _SongsScreenState
 
                 Navigator.pop(context);
 
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text(
-                      'Song deleted successfully!',
-                    ),
-                    backgroundColor:
-                        Colors.green,
+                    content: Text('Song deleted successfully!'),
+                    backgroundColor: Colors.green,
                   ),
                 );
               } catch (e) {
@@ -698,25 +437,16 @@ class _SongsScreenState
 
                 Navigator.pop(context);
 
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                      'Error deleting song: $e',
-                    ),
-                    backgroundColor:
-                        Colors.red,
+                    content: Text('Error deleting song: $e'),
+                    backgroundColor: Colors.red,
                   ),
                 );
               }
             },
 
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                color: Colors.red,
-              ),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

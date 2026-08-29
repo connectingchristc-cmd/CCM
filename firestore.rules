@@ -40,5 +40,58 @@ service cloud.firestore {
       allow read: if isMember();
       allow write: if isAdmin();
     }
+
+    // Homepage content: members see enabled content; admins manage everything.
+    match /homepage_hero_slides/{slideId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /homepage_events/{eventId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /homepage_action_cards/{cardId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /testimonials/{testimonialId} {
+      // The app filters member results to enabled testimonials. Reading the
+      // collection here avoids permission failures for legacy documents that
+      // do not yet contain an enabled field.
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    match /live_streams/{streamId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /about_us/{aboutId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /media_sermons/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+    match /media_inspirational/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+    match /media_videos/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+    match /media_missionary/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+    match /media_music/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+    match /media_sunday_school/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
+
+    match /prayer_callbacks/{requestId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /prayer_requests/{requestId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /prayer_cell/{memberId} {
+      allow read, write: if isAdmin();
+    }
   }
 }

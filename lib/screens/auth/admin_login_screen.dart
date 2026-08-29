@@ -29,15 +29,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final remember =
-        prefs.getBool('admin_remember_me') ?? false;
+    final remember = prefs.getBool('admin_remember_me') ?? false;
 
     if (remember) {
-      final email =
-          prefs.getString('admin_email') ?? '';
+      final email = prefs.getString('admin_email') ?? '';
 
-      final password =
-          prefs.getString('admin_password') ?? '';
+      final password = prefs.getString('admin_password') ?? '';
 
       if (!mounted) return;
 
@@ -53,25 +50,13 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     final prefs = await SharedPreferences.getInstance();
 
     if (_rememberMe) {
-      await prefs.setBool(
-        'admin_remember_me',
-        true,
-      );
+      await prefs.setBool('admin_remember_me', true);
 
-      await prefs.setString(
-        'admin_email',
-        _usernameController.text.trim(),
-      );
+      await prefs.setString('admin_email', _usernameController.text.trim());
 
-      await prefs.setString(
-        'admin_password',
-        _passwordController.text,
-      );
+      await prefs.setString('admin_password', _passwordController.text);
     } else {
-      await prefs.setBool(
-        'admin_remember_me',
-        false,
-      );
+      await prefs.setBool('admin_remember_me', false);
 
       await prefs.remove('admin_email');
       await prefs.remove('admin_password');
@@ -88,23 +73,19 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
   Future<void> _signInAdmin() async {
     try {
-      final credential =
-          await FirebaseAuth.instance
-              .signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _usernameController.text.trim(),
         password: _passwordController.text,
       );
 
-      final token =
-          await credential.user?.getIdTokenResult(true);
+      final token = await credential.user?.getIdTokenResult(true);
 
       if (token?.claims?['admin'] != true) {
         await FirebaseAuth.instance.signOut();
 
         throw FirebaseAuthException(
           code: 'not-admin',
-          message:
-              'This account is not an administrator.',
+          message: 'This account is not an administrator.',
         );
       }
 
@@ -115,10 +96,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainApp(
-            isAdmin: true,
-            rememberMe: _rememberMe,
-          ),
+          builder: (context) => MainApp(isAdmin: true, rememberMe: _rememberMe),
         ),
       );
     } on FirebaseAuthException catch (error) {
@@ -148,7 +126,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('CCM Admin Login'),
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -171,8 +150,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color:
-                          ccmRed.withValues(alpha: 0.1),
+                      color: ccmRed.withValues(alpha: 0.1),
                     ),
                     padding: const EdgeInsets.all(16),
                     child: const Icon(
@@ -186,13 +164,8 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                   Text(
                     'Admin Access',
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: ccmRed,
-                        ),
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold, color: ccmRed),
                   ),
 
                   const SizedBox(height: 24),
@@ -206,23 +179,15 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                         color: ccmRed,
                       ),
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      focusedBorder:
-                          OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(
-                          color: ccmRed,
-                          width: 2,
-                        ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: ccmRed, width: 2),
                       ),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Enter admin email';
                       }
 
@@ -238,16 +203,12 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'Admin Password',
 
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: ccmRed,
-                      ),
+                      prefixIcon: const Icon(Icons.lock_outline, color: ccmRed),
 
                       suffixIcon: IconButton(
                         onPressed: () {
                           setState(() {
-                            _obscurePassword =
-                                !_obscurePassword;
+                            _obscurePassword = !_obscurePassword;
                           });
                         },
                         icon: Icon(
@@ -259,25 +220,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
 
                       border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(12),
                       ),
 
-                      focusedBorder:
-                          OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(
-                          color: ccmRed,
-                          width: 2,
-                        ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: ccmRed, width: 2),
                       ),
                     ),
 
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty) {
+                      if (value == null || value.isEmpty) {
                         return 'Enter admin password';
                       }
 
@@ -292,20 +245,16 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
 
                     onChanged: (value) {
                       setState(() {
-                        _rememberMe =
-                            value ?? false;
+                        _rememberMe = value ?? false;
                       });
                     },
 
-                    title:
-                        const Text('Remember Me'),
+                    title: const Text('Remember Me'),
 
                     activeColor: ccmRed,
 
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(8),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
 
@@ -315,13 +264,10 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      style:
-                          ElevatedButton.styleFrom(
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: ccmRed,
-                        shape:
-                            RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
 
@@ -346,9 +292,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                     },
                     child: const Text(
                       'Back to Home',
-                      style: TextStyle(
-                        color: ccmRed,
-                      ),
+                      style: TextStyle(color: ccmRed),
                     ),
                   ),
                 ],

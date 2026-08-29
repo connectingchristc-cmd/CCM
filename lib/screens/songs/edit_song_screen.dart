@@ -8,26 +8,38 @@ class EditSongScreen extends StatefulWidget {
   final String songId;
   final Map<String, dynamic> song;
 
-  const EditSongScreen({
-    super.key,
-    required this.songId,
-    required this.song,
-  });
+  const EditSongScreen({super.key, required this.songId, required this.song});
 
   @override
-  State<EditSongScreen> createState() =>
-      _EditSongScreenState();
+  State<EditSongScreen> createState() => _EditSongScreenState();
 }
 
-class _EditSongScreenState
-    extends State<EditSongScreen> {
+class _EditSongScreenState extends State<EditSongScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  static const _categories = [
+    'Praise',
+    'Worship',
+    'Gospel',
+    'Thanksgiving',
+    'Prayer',
+    'Confession / Repentance',
+    'Holy Communion',
+    'Wedding',
+    'Christmas',
+    'Good Friday',
+    'Resurrection',
+    'Sunday School',
+    'Action Songs',
+  ];
 
   late final TextEditingController _engTitleController;
   late final TextEditingController _telTitleController;
   late final TextEditingController _lyricsController;
   late final TextEditingController _keyController;
   late final TextEditingController _chordsController;
+
+  String? _category;
 
   bool _isSubmitting = false;
   bool _sendNotification = false;
@@ -48,13 +60,16 @@ class _EditSongScreenState
       text: widget.song['lyrics'] ?? '',
     );
 
-    _keyController = TextEditingController(
-      text: widget.song['key'] ?? '',
-    );
+    _keyController = TextEditingController(text: widget.song['key'] ?? '');
 
     _chordsController = TextEditingController(
       text: widget.song['chords'] ?? '',
     );
+
+    final savedCategory = widget.song['category'];
+    _category = _categories.contains(savedCategory)
+        ? savedCategory as String
+        : null;
   }
 
   Future<void> _updateSong() async {
@@ -67,44 +82,35 @@ class _EditSongScreenState
     });
 
     try {
-      final titleEng =
-          _engTitleController.text.trim();
+      final titleEng = _engTitleController.text.trim();
 
-      final titleTel =
-          _telTitleController.text.trim();
+      final titleTel = _telTitleController.text.trim();
 
       await FirebaseFirestore.instance
           .collection('songs')
           .doc(widget.songId)
           .update({
-        'title_english': titleEng,
-        'title_telugu': titleTel,
-        'lyrics':
-            _lyricsController.text.trim(),
-        'key':
-            _keyController.text.trim(),
-        'chords':
-            _chordsController.text.trim(),
-        'updated_at':
-            FieldValue.serverTimestamp(),
-      });
+            'title_english': titleEng,
+            'title_telugu': titleTel,
+            'lyrics': _lyricsController.text.trim(),
+            'key': _keyController.text.trim(),
+            'chords': _chordsController.text.trim(),
+            'category': _category,
+            'updated_at': FieldValue.serverTimestamp(),
+          });
 
       if (_sendNotification) {
         await sendNotificationRecord(
           title: 'Song Updated',
-          body:
-              '$titleEng ($titleTel) has been updated in CCM App.',
+          body: '$titleEng ($titleTel) has been updated in CCM App.',
           category: 'song',
         );
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Song updated successfully!',
-            ),
+            content: Text('Song updated successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -113,12 +119,9 @@ class _EditSongScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Error updating song: $e',
-            ),
+            content: Text('Error updating song: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -149,11 +152,10 @@ class _EditSongScreenState
       appBar: AppBar(
         title: const Text(
           'Edit Song',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
       ),
 
       body: Container(
@@ -161,16 +163,12 @@ class _EditSongScreenState
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              ccmRed.withValues(alpha: 0.05),
-              ccmWhite,
-            ],
+            colors: [ccmSandDark.withValues(alpha: 0.35), ccmSand],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
 
           child: Form(
             key: _formKey,
@@ -178,46 +176,26 @@ class _EditSongScreenState
             child: Column(
               children: [
                 TextFormField(
-                  controller:
-                      _engTitleController,
+                  controller: _engTitleController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Title in English',
+                  decoration: InputDecoration(
+                    labelText: 'Title in English',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.title,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.title, color: ccmRed),
                   ),
 
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Required';
                     }
 
@@ -227,55 +205,61 @@ class _EditSongScreenState
 
                 const SizedBox(height: 16),
 
-                TextFormField(
-                  controller:
-                      _keyController,
+                DropdownButtonFormField<String>(
+                  value: _category,
+                  decoration: InputDecoration(
+                    labelText: 'Category (optional)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.category, color: ccmRed),
+                  ),
+                  hint: const Text('Select a category'),
+                  items: _categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _category = value;
+                    });
+                  },
+                ),
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Original key (optional)',
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: _keyController,
+
+                  decoration: InputDecoration(
+                    labelText: 'Original key (optional)',
 
                     hintText: 'e.g., G',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.music_note,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.music_note, color: ccmRed),
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                      _chordsController,
+                  controller: _chordsController,
 
                   maxLines: 5,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Chords (optional)',
+                  decoration: InputDecoration(
+                    labelText: 'Chords (optional)',
 
-                    hintText:
-                        'Paste chord notation here...',
+                    hintText: 'Paste chord notation here...',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
                     alignLabelWithHint: true,
@@ -285,46 +269,26 @@ class _EditSongScreenState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                      _telTitleController,
+                  controller: _telTitleController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Title in Telugu',
+                  decoration: InputDecoration(
+                    labelText: 'Title in Telugu',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.language,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.language, color: ccmRed),
                   ),
 
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Required';
                     }
 
@@ -335,44 +299,28 @@ class _EditSongScreenState
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller:
-                      _lyricsController,
+                  controller: _lyricsController,
 
                   maxLines: 12,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Song Lyrics',
+                  decoration: InputDecoration(
+                    labelText: 'Song Lyrics',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
                     alignLabelWithHint: true,
                   ),
 
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Required';
                     }
 
@@ -383,28 +331,20 @@ class _EditSongScreenState
                 const SizedBox(height: 16),
 
                 CheckboxListTile(
-                  value:
-                      _sendNotification,
+                  value: _sendNotification,
 
                   onChanged: (value) {
                     setState(() {
-                      _sendNotification =
-                          value ?? false;
+                      _sendNotification = value ?? false;
                     });
                   },
 
-                  title: const Text(
-                    'Send notification to members',
-                  ),
+                  title: const Text('Send notification to members'),
 
                   activeColor: ccmRed,
 
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      8,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
 
@@ -414,51 +354,34 @@ class _EditSongScreenState
                   width: double.infinity,
                   height: 50,
 
-                  child:
-                      ElevatedButton.icon(
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          ccmRed,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ccmRed,
 
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                          12,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
 
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : _updateSong,
+                    onPressed: _isSubmitting ? null : _updateSong,
 
                     icon: _isSubmitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child:
-                                CircularProgressIndicator(
+                            child: CircularProgressIndicator(
                               color: ccmWhite,
                               strokeWidth: 2,
                             ),
                           )
-                        : const Icon(
-                            Icons.save,
-                          ),
+                        : const Icon(Icons.save),
 
                     label: Text(
-                      _isSubmitting
-                          ? 'Updating...'
-                          : 'Update Song',
+                      _isSubmitting ? 'Updating...' : 'Update Song',
 
-                      style:
-                          const TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                         color: ccmWhite,
                       ),
                     ),

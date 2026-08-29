@@ -14,20 +14,33 @@ class AddSongScreen extends StatefulWidget {
 class _AddSongScreenState extends State<AddSongScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final _engTitleController =
-      TextEditingController();
+  static const _categories = [
+    'Praise',
+    'Worship',
+    'Gospel',
+    'Thanksgiving',
+    'Prayer',
+    'Confession / Repentance',
+    'Holy Communion',
+    'Wedding',
+    'Christmas',
+    'Good Friday',
+    'Resurrection',
+    'Sunday School',
+    'Action Songs',
+  ];
 
-  final _telTitleController =
-      TextEditingController();
+  final _engTitleController = TextEditingController();
 
-  final _lyricsController =
-      TextEditingController();
+  final _telTitleController = TextEditingController();
 
-  final _keyController =
-      TextEditingController();
+  final _lyricsController = TextEditingController();
 
-  final _chordsController =
-      TextEditingController();
+  final _keyController = TextEditingController();
+
+  final _chordsController = TextEditingController();
+
+  String? _category;
 
   bool _isSubmitting = false;
   bool _sendNotification = false;
@@ -42,43 +55,32 @@ class _AddSongScreenState extends State<AddSongScreen> {
     });
 
     try {
-      final titleEng =
-          _engTitleController.text.trim();
+      final titleEng = _engTitleController.text.trim();
 
-      final titleTel =
-          _telTitleController.text.trim();
+      final titleTel = _telTitleController.text.trim();
 
-      await FirebaseFirestore.instance
-          .collection('songs')
-          .add({
+      await FirebaseFirestore.instance.collection('songs').add({
         'title_english': titleEng,
         'title_telugu': titleTel,
-        'lyrics':
-            _lyricsController.text.trim(),
-        'key':
-            _keyController.text.trim(),
-        'chords':
-            _chordsController.text.trim(),
-        'created_at':
-            FieldValue.serverTimestamp(),
+        'lyrics': _lyricsController.text.trim(),
+        'key': _keyController.text.trim(),
+        'chords': _chordsController.text.trim(),
+        'category': _category,
+        'created_at': FieldValue.serverTimestamp(),
       });
 
       if (_sendNotification) {
         await sendNotificationRecord(
           title: 'New Song Added',
-          body:
-              '$titleEng ($titleTel) is now available in CCM App.',
+          body: '$titleEng ($titleTel) is now available in CCM App.',
           category: 'song',
         );
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Song added successfully!',
-            ),
+            content: Text('Song added successfully!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -87,12 +89,9 @@ class _AddSongScreenState extends State<AddSongScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'Error adding song: $e',
-            ),
+            content: Text('Error adding song: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -112,11 +111,10 @@ class _AddSongScreenState extends State<AddSongScreen> {
       appBar: AppBar(
         title: const Text(
           'Add New Song',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
       ),
 
       body: Container(
@@ -124,16 +122,12 @@ class _AddSongScreenState extends State<AddSongScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              ccmRed.withValues(alpha: 0.05),
-              ccmWhite,
-            ],
+            colors: [ccmSandDark.withValues(alpha: 0.35), ccmSand],
           ),
         ),
 
         child: SingleChildScrollView(
-          padding:
-              const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16.0),
 
           child: Form(
             key: _formKey,
@@ -143,307 +137,215 @@ class _AddSongScreenState extends State<AddSongScreen> {
                 // ================= ENGLISH TITLE =================
 
                 TextFormField(
-                  controller:
-                      _engTitleController,
+                  controller: _engTitleController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Title in English',
+                  decoration: InputDecoration(
+                    labelText: 'Title in English',
 
-                    hintText:
-                        'e.g., Aaradhana Neeke',
+                    hintText: 'e.g., Aaradhana Neeke',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.title,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.title, color: ccmRed),
                   ),
 
                   validator: (val) =>
-                      val == null ||
-                              val.isEmpty
-                          ? 'Required'
-                          : null,
+                      val == null || val.isEmpty ? 'Required' : null,
                 ),
 
                 const SizedBox(height: 16),
 
                 // ================= KEY =================
-
                 TextFormField(
-                  controller:
-                      _keyController,
+                  controller: _keyController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Original key (optional)',
+                  decoration: InputDecoration(
+                    labelText: 'Original key (optional)',
 
                     hintText: 'e.g., G',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.music_note,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.music_note, color: ccmRed),
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
-                // ================= CHORDS =================
+                // ================= CATEGORY =================
+                DropdownButtonFormField<String>(
+                  value: _category,
+                  decoration: InputDecoration(
+                    labelText: 'Category (optional)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    prefixIcon: const Icon(Icons.category, color: ccmRed),
+                  ),
+                  hint: const Text('Select a category'),
+                  items: _categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category,
+                      child: Text(category),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _category = value;
+                    });
+                  },
+                ),
 
+                const SizedBox(height: 16),
+
+                // ================= CHORDS =================
                 TextFormField(
-                  controller:
-                      _chordsController,
+                  controller: _chordsController,
 
                   maxLines: 5,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Chords (optional)',
+                  decoration: InputDecoration(
+                    labelText: 'Chords (optional)',
 
                     hintText:
                         'Paste chord notation here, for example: G  D  Em  C',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    alignLabelWithHint:
-                        true,
+                    alignLabelWithHint: true,
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
                 // ================= TELUGU TITLE =================
-
                 TextFormField(
-                  controller:
-                      _telTitleController,
+                  controller: _telTitleController,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Title in Telugu',
+                  decoration: InputDecoration(
+                    labelText: 'Title in Telugu',
 
-                    hintText:
-                        'e.g., ఆరాధన నీకే',
+                    hintText: 'e.g., ఆరాధన నీకే',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
-                    prefixIcon:
-                        const Icon(
-                      Icons.language,
-                      color: ccmRed,
-                    ),
+                    prefixIcon: const Icon(Icons.language, color: ccmRed),
                   ),
 
                   validator: (val) =>
-                      val == null ||
-                              val.isEmpty
-                          ? 'Required'
-                          : null,
+                      val == null || val.isEmpty ? 'Required' : null,
                 ),
 
                 const SizedBox(height: 16),
 
                 // ================= LYRICS =================
-
                 TextFormField(
-                  controller:
-                      _lyricsController,
+                  controller: _lyricsController,
 
                   maxLines: 12,
 
-                  decoration:
-                      InputDecoration(
-                    labelText:
-                        'Song Lyrics',
+                  decoration: InputDecoration(
+                    labelText: 'Song Lyrics',
 
-                    hintText:
-                        'Enter song lyrics in Telugu script...',
+                    hintText: 'Enter song lyrics in Telugu script...',
 
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
 
-                    focusedBorder:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        12,
-                      ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
 
-                      borderSide:
-                          const BorderSide(
-                        color: ccmRed,
-                        width: 2,
-                      ),
+                      borderSide: const BorderSide(color: ccmRed, width: 2),
                     ),
 
-                    alignLabelWithHint:
-                        true,
+                    alignLabelWithHint: true,
                   ),
 
                   validator: (val) =>
-                      val == null ||
-                              val.isEmpty
-                          ? 'Required'
-                          : null,
+                      val == null || val.isEmpty ? 'Required' : null,
                 ),
 
                 const SizedBox(height: 16),
 
                 // ================= NOTIFICATION =================
-
                 CheckboxListTile(
-                  value:
-                      _sendNotification,
+                  value: _sendNotification,
 
                   onChanged: (val) {
                     setState(() {
-                      _sendNotification =
-                          val ?? false;
+                      _sendNotification = val ?? false;
                     });
                   },
 
-                  title: const Text(
-                    'Send notification to members',
-                  ),
+                  title: const Text('Send notification to members'),
 
                   activeColor: ccmRed,
 
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
-                      8,
-                    ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
 
                 const SizedBox(height: 24),
 
                 // ================= SAVE BUTTON =================
-
                 SizedBox(
                   width: double.infinity,
                   height: 50,
 
-                  child:
-                      ElevatedButton.icon(
-                    style:
-                        ElevatedButton.styleFrom(
-                      backgroundColor:
-                          ccmRed,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ccmRed,
 
-                      shape:
-                          RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(
-                          12,
-                        ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
 
-                    onPressed:
-                        _isSubmitting
-                            ? null
-                            : _submitSong,
+                    onPressed: _isSubmitting ? null : _submitSong,
 
                     icon: _isSubmitting
                         ? const SizedBox(
                             width: 20,
                             height: 20,
 
-                            child:
-                                CircularProgressIndicator(
+                            child: CircularProgressIndicator(
                               strokeWidth: 2,
 
-                              valueColor:
-                                  const AlwaysStoppedAnimation<
-                                      Color>(
+                              valueColor: const AlwaysStoppedAnimation<Color>(
                                 ccmWhite,
                               ),
                             ),
                           )
-                        : const Icon(
-                            Icons.save,
-                          ),
+                        : const Icon(Icons.save),
 
                     label: Text(
-                      _isSubmitting
-                          ? 'Saving...'
-                          : 'Save & Publish Song',
+                      _isSubmitting ? 'Saving...' : 'Save & Publish Song',
 
-                      style:
-                          const TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
-                        fontWeight:
-                            FontWeight.bold,
+                        fontWeight: FontWeight.bold,
                         color: ccmWhite,
                       ),
                     ),

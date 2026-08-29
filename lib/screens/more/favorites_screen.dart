@@ -12,31 +12,25 @@ class FavoritesScreen extends StatelessWidget {
     return AnimatedBuilder(
       animation: appFeatureStore,
       builder: (context, _) {
-        final favorites =
-            appFeatureStore.favoriteSongIds
-                .map(
-                  (id) =>
-                      appFeatureStore.cachedSongs[id],
-                )
-                .whereType<Map<String, dynamic>>()
-                .toList();
+        final favorites = appFeatureStore.favoriteSongIds
+            .map((id) => appFeatureStore.cachedSongs[id])
+            .whereType<Map<String, dynamic>>()
+            .toList();
 
         return Scaffold(
           appBar: AppBar(
             title: const Text(
               'Favorites',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            backgroundColor: ccmRed,
+            backgroundColor: ccmSandDark,
+            foregroundColor: ccmInk,
           ),
 
           body: favorites.isEmpty
               ? const Center(
                   child: Column(
-                    mainAxisAlignment:
-                        MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.favorite_outline,
@@ -46,87 +40,49 @@ class FavoritesScreen extends StatelessWidget {
                       SizedBox(height: 16),
                       Text(
                         'No favorite songs yet.',
-                        style: TextStyle(
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
                 )
               : ReorderableListView.builder(
-                  padding:
-                      const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
                   itemCount: favorites.length,
 
-                  onReorder:
-                      (oldIndex, newIndex) async {
-                    await appFeatureStore
-                        .reorderFavorites(
-                      oldIndex,
-                      newIndex,
-                    );
+                  onReorder: (oldIndex, newIndex) async {
+                    await appFeatureStore.reorderFavorites(oldIndex, newIndex);
                   },
 
-                  itemBuilder:
-                      (context, index) {
-                    final song =
-                        favorites[index];
+                  itemBuilder: (context, index) {
+                    final song = favorites[index];
 
-                    final songId =
-                        song['id']
-                            ?.toString() ??
-                            '';
+                    final songId = song['id']?.toString() ?? '';
 
                     return Card(
                       key: ValueKey(songId),
-                      margin:
-                          const EdgeInsets.only(
-                        bottom: 8,
-                      ),
+                      margin: const EdgeInsets.only(bottom: 8),
 
                       child: ListTile(
-                        leading:
-                            const CircleAvatar(
-                          backgroundColor:
-                              ccmRed,
+                        leading: const CircleAvatar(
+                          backgroundColor: ccmRed,
 
-                          child: Icon(
-                            Icons.music_note,
-                            color: ccmWhite,
-                          ),
+                          child: Icon(Icons.music_note, color: ccmWhite),
                         ),
 
                         title: Text(
-                          song['title_telugu'] ??
-                              '',
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight.w600,
-                          ),
+                          song['title_telugu'] ?? '',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
 
-                        subtitle: Text(
-                          song['title_english'] ??
-                              '',
-                        ),
+                        subtitle: Text(song['title_english'] ?? ''),
 
-                        trailing:
-                            IconButton(
-                          icon:
-                              const Icon(
-                            Icons.favorite,
-                            color: ccmRed,
-                          ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.favorite, color: ccmRed),
 
-                          tooltip:
-                              'Remove from favorites',
+                          tooltip: 'Remove from favorites',
 
                           onPressed: () async {
-                            await appFeatureStore
-                                .toggleFavorite(
-                              songId,
-                            );
+                            await appFeatureStore.toggleFavorite(songId);
                           },
                         ),
 
@@ -134,17 +90,11 @@ class FavoritesScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      LyricViewScreen(
-                                songId:
-                                    songId,
-                                song:
-                                    song,
-                                playlist:
-                                    favorites,
-                                currentIndex:
-                                    index,
+                              builder: (context) => LyricViewScreen(
+                                songId: songId,
+                                song: song,
+                                playlist: favorites,
+                                currentIndex: index,
                               ),
                             ),
                           );

@@ -8,10 +8,7 @@ import 'setlists_screen.dart';
 class MoreScreen extends StatefulWidget {
   final bool isAdmin;
 
-  const MoreScreen({
-    super.key,
-    required this.isAdmin,
-  });
+  const MoreScreen({super.key, required this.isAdmin});
 
   @override
   State<MoreScreen> createState() => _MoreScreenState();
@@ -25,12 +22,11 @@ class _MoreScreenState extends State<MoreScreen> {
         automaticallyImplyLeading: false,
         title: const Text(
           'More',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
         elevation: 0,
       ),
 
@@ -39,10 +35,7 @@ class _MoreScreenState extends State<MoreScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              ccmRed.withValues(alpha: 0.05),
-              ccmWhite,
-            ],
+            colors: [ccmSandDark.withValues(alpha: 0.35), ccmSand],
           ),
         ),
 
@@ -55,33 +48,23 @@ class _MoreScreenState extends State<MoreScreen> {
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmRed,
-                  child: Icon(
-                    Icons.favorite,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.favorite, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'Favorites',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'View your favorite songs',
-                ),
+                subtitle: const Text('View your favorite songs'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const FavoritesScreen(),
+                      builder: (context) => const FavoritesScreen(),
                     ),
                   );
                 },
@@ -91,38 +74,27 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // ================= SETLISTS =================
-
             Card(
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmBlue,
-                  child: Icon(
-                    Icons.playlist_play,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.playlist_play, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'Worship Setlists',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'Create and manage worship setlists',
-                ),
+                subtitle: const Text('Create and manage worship setlists'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const SetlistsScreen(),
+                      builder: (context) => const SetlistsScreen(),
                     ),
                   );
                 },
@@ -132,40 +104,28 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // ================= ABOUT US =================
-
             Card(
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmRed,
-                  child: Icon(
-                    Icons.info_outline,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.info_outline, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'About Us',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'About Connecting Christ Ministries',
-                ),
+                subtitle: const Text('About Connecting Christ Ministries'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const ComingSoonScreen(
-                        title: 'About Us',
-                      ),
+                          const ComingSoonScreen(title: 'About Us'),
                     ),
                   );
                 },
@@ -175,40 +135,28 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // ================= PASTORAL TEAM =================
-
             Card(
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmBlue,
-                  child: Icon(
-                    Icons.people_outline,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.people_outline, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'Pastoral Team',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'Meet our pastoral team',
-                ),
+                subtitle: const Text('Meet our pastoral team'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const ComingSoonScreen(
-                        title: 'Pastoral Team',
-                      ),
+                          const ComingSoonScreen(title: 'Pastoral Team'),
                     ),
                   );
                 },
@@ -218,40 +166,28 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // ================= CONTACT US =================
-
             Card(
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmRed,
-                  child: Icon(
-                    Icons.contact_phone_outlined,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.contact_phone_outlined, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'Contact Us',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'Get in touch with CCM',
-                ),
+                subtitle: const Text('Get in touch with CCM'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const ComingSoonScreen(
-                        title: 'Contact Us',
-                      ),
+                          const ComingSoonScreen(title: 'Contact Us'),
                     ),
                   );
                 },
@@ -261,40 +197,28 @@ class _MoreScreenState extends State<MoreScreen> {
             const SizedBox(height: 12),
 
             // ================= PRAYER REQUEST =================
-
             Card(
               child: ListTile(
                 leading: const CircleAvatar(
                   backgroundColor: ccmBlue,
-                  child: Icon(
-                    Icons.volunteer_activism,
-                    color: ccmWhite,
-                  ),
+                  child: Icon(Icons.volunteer_activism, color: ccmWhite),
                 ),
 
                 title: const Text(
                   'Prayer Request',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
 
-                subtitle: const Text(
-                  'Submit your prayer request',
-                ),
+                subtitle: const Text('Submit your prayer request'),
 
-                trailing: const Icon(
-                  Icons.chevron_right,
-                ),
+                trailing: const Icon(Icons.chevron_right),
 
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) =>
-                          const ComingSoonScreen(
-                        title: 'Prayer Request',
-                      ),
+                          const ComingSoonScreen(title: 'Prayer Request'),
                     ),
                   );
                 },

@@ -7,24 +7,18 @@ import '../songs/lyric_view_screen.dart';
 class SetlistDetailScreen extends StatefulWidget {
   final int setlistIndex;
 
-  const SetlistDetailScreen({
-    super.key,
-    required this.setlistIndex,
-  });
+  const SetlistDetailScreen({super.key, required this.setlistIndex});
 
   @override
-  State<SetlistDetailScreen> createState() =>
-      _SetlistDetailScreenState();
+  State<SetlistDetailScreen> createState() => _SetlistDetailScreenState();
 }
 
-class _SetlistDetailScreenState
-    extends State<SetlistDetailScreen> {
+class _SetlistDetailScreenState extends State<SetlistDetailScreen> {
   Map<String, dynamic> get _setlist =>
       appFeatureStore.setlists[widget.setlistIndex];
 
   Future<void> _addSong() async {
-    final songs =
-        appFeatureStore.cachedSongs.values.toList();
+    final songs = appFeatureStore.cachedSongs.values.toList();
 
     if (songs.isEmpty) {
       if (!mounted) return;
@@ -40,8 +34,7 @@ class _SetlistDetailScreenState
       return;
     }
 
-    final selectedSongId =
-        await showDialog<String>(
+    final selectedSongId = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -55,32 +48,20 @@ class _SetlistDetailScreenState
               itemBuilder: (context, index) {
                 final song = songs[index];
 
-                final id =
-                    song['id']?.toString() ?? '';
+                final id = song['id']?.toString() ?? '';
 
                 return ListTile(
                   leading: const CircleAvatar(
                     backgroundColor: ccmRed,
-                    child: Icon(
-                      Icons.music_note,
-                      color: ccmWhite,
-                    ),
+                    child: Icon(Icons.music_note, color: ccmWhite),
                   ),
 
-                  title: Text(
-                    song['title_english'] ??
-                        'Song',
-                  ),
+                  title: Text(song['title_english'] ?? 'Song'),
 
-                  subtitle: Text(
-                    song['title_telugu'] ?? '',
-                  ),
+                  subtitle: Text(song['title_telugu'] ?? ''),
 
                   onTap: () {
-                    Navigator.pop(
-                      context,
-                      id,
-                    );
+                    Navigator.pop(context, id);
                   },
                 );
               },
@@ -89,8 +70,7 @@ class _SetlistDetailScreenState
 
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.pop(context),
+              onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
           ],
@@ -103,10 +83,7 @@ class _SetlistDetailScreenState
     }
 
     final songIds =
-        (_setlist['songIds']
-                as List<dynamic>?)
-            ?.cast<String>() ??
-        <String>[];
+        (_setlist['songIds'] as List<dynamic>?)?.cast<String>() ?? <String>[];
 
     if (!songIds.contains(selectedSongId)) {
       songIds.add(selectedSongId);
@@ -121,14 +98,9 @@ class _SetlistDetailScreenState
     }
   }
 
-  Future<void> _removeSong(
-    String songId,
-  ) async {
+  Future<void> _removeSong(String songId) async {
     final songIds =
-        (_setlist['songIds']
-                as List<dynamic>?)
-            ?.cast<String>() ??
-        <String>[];
+        (_setlist['songIds'] as List<dynamic>?)?.cast<String>() ?? <String>[];
 
     songIds.remove(songId);
 
@@ -150,9 +122,7 @@ class _SetlistDetailScreenState
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text(
-          'Setlist published successfully!',
-        ),
+        content: Text('Setlist published successfully!'),
         backgroundColor: Colors.green,
       ),
     );
@@ -167,13 +137,8 @@ class _SetlistDetailScreenState
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Setlist unpublished.',
-        ),
-      ),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Setlist unpublished.')));
 
     setState(() {});
   }
@@ -181,33 +146,24 @@ class _SetlistDetailScreenState
   @override
   Widget build(BuildContext context) {
     final songIds =
-        (_setlist['songIds']
-                as List<dynamic>?)
-            ?.cast<String>() ??
-        <String>[];
+        (_setlist['songIds'] as List<dynamic>?)?.cast<String>() ?? <String>[];
 
     final songs = songIds
-        .map(
-          (id) =>
-              appFeatureStore.cachedSongs[id],
-        )
+        .map((id) => appFeatureStore.cachedSongs[id])
         .whereType<Map<String, dynamic>>()
         .toList();
 
-    final isPublished =
-        _setlist['published'] == true;
+    final isPublished = _setlist['published'] == true;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _setlist['name'] ??
-              'Setlist',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          _setlist['name'] ?? 'Setlist',
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
 
-        backgroundColor: ccmRed,
+        backgroundColor: ccmSandDark,
+        foregroundColor: ccmInk,
 
         actions: [
           PopupMenuButton<String>(
@@ -228,10 +184,7 @@ class _SetlistDetailScreenState
                     value: 'publish',
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.public,
-                          color: ccmBlue,
-                        ),
+                        Icon(Icons.public, color: ccmBlue),
                         SizedBox(width: 8),
                         Text('Publish'),
                       ],
@@ -243,10 +196,7 @@ class _SetlistDetailScreenState
                     value: 'unpublish',
                     child: Row(
                       children: [
-                        Icon(
-                          Icons.public_off,
-                          color: Colors.grey,
-                        ),
+                        Icon(Icons.public_off, color: Colors.grey),
                         SizedBox(width: 8),
                         Text('Unpublish'),
                       ],
@@ -263,29 +213,17 @@ class _SetlistDetailScreenState
           if (isPublished)
             Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 10,
-              ),
-              color:
-                  ccmBlue.withValues(
-                alpha: 0.1,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              color: ccmBlue.withValues(alpha: 0.1),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.public,
-                    color: ccmBlue,
-                    size: 20,
-                  ),
+                  Icon(Icons.public, color: ccmBlue, size: 20),
                   SizedBox(width: 8),
                   Text(
                     'This setlist is published',
                     style: TextStyle(
                       color: ccmBlue,
-                      fontWeight:
-                          FontWeight.bold,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -297,134 +235,80 @@ class _SetlistDetailScreenState
                 ? const Center(
                     child: Text(
                       'No songs in this setlist yet.\nTap "Add Song" to begin.',
-                      textAlign:
-                          TextAlign.center,
+                      textAlign: TextAlign.center,
                     ),
                   )
                 : ReorderableListView.builder(
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
 
                     itemCount: songs.length,
 
-                    onReorder:
-                        (oldIndex, newIndex) async {
+                    onReorder: (oldIndex, newIndex) async {
                       if (newIndex > oldIndex) {
                         newIndex -= 1;
                       }
 
-                      final movedId =
-                          songIds.removeAt(
-                        oldIndex,
-                      );
+                      final movedId = songIds.removeAt(oldIndex);
 
-                      songIds.insert(
-                        newIndex,
-                        movedId,
-                      );
+                      songIds.insert(newIndex, movedId);
 
-                      _setlist['songIds'] =
-                          songIds;
+                      _setlist['songIds'] = songIds;
 
-                      await appFeatureStore
-                          .saveSetlists();
+                      await appFeatureStore.saveSetlists();
 
                       if (mounted) {
                         setState(() {});
                       }
                     },
 
-                    itemBuilder:
-                        (context, index) {
-                      final song =
-                          songs[index];
+                    itemBuilder: (context, index) {
+                      final song = songs[index];
 
-                      final id =
-                          song['id']
-                                  ?.toString() ??
-                              '';
+                      final id = song['id']?.toString() ?? '';
 
                       return ListTile(
                         key: ValueKey(id),
 
-                        leading:
-                            Row(
-                          mainAxisSize:
-                              MainAxisSize.min,
+                        leading: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons
-                                  .drag_handle,
-                              color:
-                                  Colors.grey,
-                            ),
-                            const SizedBox(
-                              width: 8,
-                            ),
+                            const Icon(Icons.drag_handle, color: Colors.grey),
+                            const SizedBox(width: 8),
                             CircleAvatar(
-                              backgroundColor:
-                                  ccmRed,
+                              backgroundColor: ccmRed,
                               child: Text(
                                 '${index + 1}',
-                                style:
-                                    const TextStyle(
-                                  color:
-                                      ccmWhite,
-                                ),
+                                style: const TextStyle(color: ccmWhite),
                               ),
                             ),
                           ],
                         ),
 
                         title: Text(
-                          song[
-                                  'title_english'] ??
-                              'Song',
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight.w600,
-                          ),
+                          song['title_english'] ?? 'Song',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
 
-                        subtitle: Text(
-                          song[
-                                  'title_telugu'] ??
-                              '',
-                        ),
+                        subtitle: Text(song['title_telugu'] ?? ''),
 
-                        trailing:
-                            IconButton(
-                          icon:
-                              const Icon(
-                            Icons
-                                .remove_circle_outline,
-                            color:
-                                Colors.red,
+                        trailing: IconButton(
+                          icon: const Icon(
+                            Icons.remove_circle_outline,
+                            color: Colors.red,
                           ),
-                          tooltip:
-                              'Remove song',
-                          onPressed: () =>
-                              _removeSong(
-                            id,
-                          ),
+                          tooltip: 'Remove song',
+                          onPressed: () => _removeSong(id),
                         ),
 
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      LyricViewScreen(
+                              builder: (context) => LyricViewScreen(
                                 songId: id,
                                 song: song,
-                                playlist:
-                                    songs,
-                                currentIndex:
-                                    index,
+                                playlist: songs,
+                                currentIndex: index,
                               ),
                             ),
                           );
@@ -436,23 +320,14 @@ class _SetlistDetailScreenState
         ],
       ),
 
-      floatingActionButton:
-          FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton.extended(
         backgroundColor: ccmRed,
 
         onPressed: _addSong,
 
-        icon: const Icon(
-          Icons.add,
-          color: ccmWhite,
-        ),
+        icon: const Icon(Icons.add, color: ccmWhite),
 
-        label: const Text(
-          'Add Song',
-          style: TextStyle(
-            color: ccmWhite,
-          ),
-        ),
+        label: const Text('Add Song', style: TextStyle(color: ccmWhite)),
       ),
     );
   }
