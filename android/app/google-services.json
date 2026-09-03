@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1076200552996",
+    "project_id": "ccm-melodies",
+    "storage_bucket": "ccm-melodies.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1076200552996:android:cf1ee34c94579e7fe5f6b1",
+        "android_client_info": {
+          "package_name": "com.connextingchrist.ccm_melodies"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBF6SisxVONENbTYmV_Wa1vEnGx-PXVZwY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

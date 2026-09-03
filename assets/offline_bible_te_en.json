@@ -1,0 +1,80 @@
+{
+  "chapters": [
+    {
+      "testament": "old",
+      "book": "Genesis",
+      "chapter": 1,
+      "english": {
+        "1": "In the beginning God created the heavens and the earth.",
+        "2": "The earth was formless and empty. Darkness was on the surface of the deep. God's Spirit was hovering over the waters.",
+        "3": "God said, Let there be light, and there was light.",
+        "4": "God saw the light, and saw that it was good. God divided the light from the darkness.",
+        "5": "God called the light Day, and the darkness he called Night. There was evening and there was morning, one day."
+      },
+      "telugu": {
+        "1": "ఆదిలో దేవుడు ఆకాశమును భూమిని సృష్టించెను.",
+        "2": "భూమి రూపరహితముగా ఖాళీగా ఉండెను; అగాధ జలములపై అంధకారము ఉండెను; దేవుని ఆత్మ జలములపై సంచరించుచుండెను.",
+        "3": "దేవుడు, వెలుగు కలుగును గాక అని చెప్పగా వెలుగు కలిగెను.",
+        "4": "ఆ వెలుగు మంచిదని దేవుడు చూచెను; ఆయన వెలుగును చీకటి నుండి వేరుచేసెను.",
+        "5": "వెలుగును పగలు అని, చీకటిని రాత్రి అని దేవుడు పిలిచెను; సాయంకాలము అయి ఉదయము అయెను, ఇదే మొదటి దినము."
+      }
+    },
+    {
+      "testament": "old",
+      "book": "Psalms",
+      "chapter": 23,
+      "english": {
+        "1": "The Lord is my shepherd: I shall lack nothing.",
+        "2": "He makes me lie down in green pastures. He leads me beside still waters.",
+        "3": "He restores my soul. He guides me in paths of righteousness for his name's sake.",
+        "4": "Even though I walk through the valley of the shadow of death, I will fear no evil; for you are with me.",
+        "5": "You prepare a table before me in the presence of my enemies."
+      },
+      "telugu": {
+        "1": "యెహోవా నా కాపరి; నాకు కొదువ ఉండదు.",
+        "2": "ఆయన నన్ను పచ్చిక గల బయళ్ళలో పడుకొనబెట్టి, నిశ్చల జలములయొద్దకు నడిపించును.",
+        "3": "ఆయన నా ప్రాణమును సేదతీర్చును; తన నామమునుబట్టి నీతిమార్గములలో నడిపించును.",
+        "4": "మరణాంధకార లోయలో నడిచినను నేనేమియు భయపడను, నీవు నాతో కూడ ఉన్నావు.",
+        "5": "నా శత్రువుల సన్నిధిలో నీవు నా ముందు భోజనపట్టికను సిద్ధపరచుచున్నావు."
+      }
+    },
+    {
+      "testament": "new",
+      "book": "Matthew",
+      "chapter": 5,
+      "english": {
+        "1": "Seeing the multitudes, he went up onto the mountain. When he had sat down, his disciples came to him.",
+        "2": "He opened his mouth and taught them.",
+        "3": "Blessed are the poor in spirit, for theirs is the Kingdom of Heaven.",
+        "4": "Blessed are those who mourn, for they shall be comforted.",
+        "5": "Blessed are the gentle, for they shall inherit the earth."
+      },
+      "telugu": {
+        "1": "యేసు జనసమూహమును చూచి కొండమీదికి ఎక్కెను; ఆయన కూర్చుండగా శిష్యులు ఆయనయొద్దకు వచ్చిరి.",
+        "2": "ఆయన తన నోరు తెరిచి వారికి బోధించెను.",
+        "3": "ఆత్మలో దరిద్రులైన వారు ధన్యులు; పరలోక రాజ్యము వారిది.",
+        "4": "దుఃఖించువారు ధన్యులు; వారు ఓదార్పు పొందుదురు.",
+        "5": "సౌమ్యులైన వారు ధన్యులు; వారు భూమిని స్వాస్థ్యముగా పొందుదురు."
+      }
+    },
+    {
+      "testament": "new",
+      "book": "John",
+      "chapter": 1,
+      "english": {
+        "1": "In the beginning was the Word, and the Word was with God, and the Word was God.",
+        "2": "The same was in the beginning with God.",
+        "3": "All things were made through him. Without him was not anything made that has been made.",
+        "4": "In him was life, and the life was the light of men.",
+        "5": "The light shines in the darkness, and the darkness has not overcome it."
+      },
+      "telugu": {
+        "1": "ఆదిలో వాక్యము ఉండెను; వాక్యము దేవునియొద్ద ఉండెను; వాక్యమే దేవుడు.",
+        "2": "అదే ఆదిలో దేవునియొద్ద ఉండెను.",
+        "3": "సర్వమును ఆయనద్వారా కలిగెను; కలిగిన వాటిలో ఒకటియు ఆయనలేక కలుగలేదు.",
+        "4": "ఆయనలో జీవము ఉండెను; ఆ జీవమే మనుష్యుల వెలుగు.",
+        "5": "ఆ వెలుగు చీకటిలో ప్రకాశించుచున్నది; చీకటి దానిని ఆర్పలేకపోయెను."
+      }
+    }
+  ]
+}

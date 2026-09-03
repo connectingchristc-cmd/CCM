@@ -1,33 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
 import '../auth/admin_login_screen.dart';
-import '../main_app.dart';
+import '../auth/member_login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
   Future<void> _openMember(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signInAnonymously();
-      if (!context.mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => const MainApp(isAdmin: false, rememberMe: false),
-        ),
-      );
-    } on FirebaseAuthException catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Member sign-in failed: ${error.message ?? error.code}',
-          ),
-        ),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const MemberLoginScreen()),
+    );
   }
 
   @override

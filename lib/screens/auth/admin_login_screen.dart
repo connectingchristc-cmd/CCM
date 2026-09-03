@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,17 +80,24 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       );
 
       final token = await credential.user?.getIdTokenResult(true);
+      final user = credential.user;
+      final hasClaimAdmin = token?.claims?['admin'] == true;
+      final hasFirestoreAdmin =
+          user != null && await _hasFirestoreAdminAccess(user.uid);
 
-      if (token?.claims?['admin'] != true) {
+      if (!hasClaimAdmin && !hasFirestoreAdmin) {
         await FirebaseAuth.instance.signOut();
 
         throw FirebaseAuthException(
           code: 'not-admin',
-          message: 'This account is not an administrator.',
+          message:
+              'This account does not have admin access. Set custom claim admin=true, '
+              'or create admins/{uid} (or users/{uid} with role=admin/isAdmin=true).',
         );
       }
 
       await _handleRememberMe();
+  await _saveAdminProfile(user);
 
       if (!mounted) return;
 
@@ -105,12 +113,108 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Admin sign-in failed: '
-            '${error.message ?? error.code}',
+            'Admin sign-in failed: ${_friendlyAuthError(error)}',
           ),
         ),
       );
     }
+  }
+
+  String _friendlyAuthError(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'invalid-credential':
+      case 'wrong-password':
+      case 'user-not-found':
+      case 'invalid-email':
+        return 'Invalid email or password.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a minute and try again.';
+      case 'network-request-failed':
+        return 'Network error. Check internet and try again.';
+      case 'not-admin':
+        return error.message ?? 'This account is not an administrator.';
+      default:
+        final message = error.message;
+        if (message != null && message.isNotEmpty) {
+          return '$message (${error.code})';
+        }
+        return error.code;
+    }
+  }
+
+  Future<bool> _hasFirestoreAdminAccess(String uid) async {
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final adminDoc = await firestore.collection('admins').doc(uid).get();
+      if (adminDoc.exists) {
+        return true;
+      }
+    } catch (_) {
+      // Ignore and continue with other admin marker checks.
+    }
+
+    try {
+      final userDoc = await firestore.collection('users').doc(uid).get();
+      if (!userDoc.exists) {
+        return false;
+      }
+
+      final data = userDoc.data();
+      return data?['role'] == 'admin' || data?['isAdmin'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> _saveAdminProfile(User? user) async {
+    if (user == null) {
+      return;
+    }
+
+    final firestore = FirebaseFirestore.instance;
+    final userRef = firestore.collection('users').doc(user.uid);
+    final adminRef = firestore.collection('admins').doc(user.uid);
+    final snapshot = await userRef.get();
+    final adminSnapshot = await adminRef.get();
+    final data = snapshot.data() ?? adminSnapshot.data();
+    final email = user.email ?? _usernameController.text.trim();
+    final existingName = (data?['fullName'] ?? data?['name'] ?? '').toString().trim();
+    final displayName = existingName.isNotEmpty
+        ? existingName
+        : _displayNameFromEmail(email);
+
+    final profileData = {
+      'fullName': displayName,
+      'name': displayName,
+      'email': email,
+      'role': 'admin',
+      'isAdmin': true,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'lastLoginAt': FieldValue.serverTimestamp(),
+      if (!snapshot.exists && !adminSnapshot.exists) 'createdAt': FieldValue.serverTimestamp(),
+    };
+
+    await Future.wait([
+      userRef.set(profileData, SetOptions(merge: true)),
+      adminRef.set(profileData, SetOptions(merge: true)),
+    ]);
+  }
+
+  String _displayNameFromEmail(String email) {
+    final localPart = email.split('@').first.trim();
+    if (localPart.isEmpty) {
+      return 'ADMIN';
+    }
+
+    final cleaned = localPart.replaceAll(RegExp(r'[._-]+'), ' ').trim();
+    final words = cleaned.split(RegExp(r'\s+')).where((part) => part.isNotEmpty);
+    final titleCased = words
+        .map((word) => word[0].toUpperCase() + word.substring(1).toLowerCase())
+        .join(' ')
+        .trim();
+
+    return titleCased.isEmpty ? localPart.toUpperCase() : titleCased;
   }
 
   @override
