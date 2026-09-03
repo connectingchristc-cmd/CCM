@@ -7,8 +7,38 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function hasAdminDoc() {
+      return exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function hasAdminRoleInUsers() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        (
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+        );
+    }
+
     function isAdmin() {
-      return isMember() && request.auth.token.get('admin', false) == true;
+      return isMember() && (
+        request.auth.token.get('admin', false) == true ||
+        hasAdminDoc() ||
+        hasAdminRoleInUsers()
+      );
+    }
+
+    match /admins/{uid} {
+      allow read: if isMember() && request.auth.uid == uid;
+      allow write: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read: if isAdmin() ||
+        (isMember() && request.auth.uid == uid) ||
+        (isMember() &&
+          request.auth.token.phone_number != null &&
+          resource.data.phoneNumber == request.auth.token.phone_number);
+      allow write: if isAdmin() || (isMember() && request.auth.uid == uid);
     }
 
     // Songs rules
@@ -38,6 +68,30 @@ service cloud.firestore {
     // Daily Bread collection rules
     match /daily_bread/{breadId} {
       allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // Daily Devotion image feed rules
+    match /daily_devotions/{devotionId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    // Notification feed records used by Updates-like pages
+    match /notifications/{notificationId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // Imported bilingual offline bible chapters (cached by Firestore on device)
+    match /offline_bible_chapters/{chapterId} {
+      allow read: if isMember();
+      allow write: if isAdmin();
+    }
+
+    // Post-login popup content (special service, highlights)
+    match /app_popups/{popupId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
       allow write: if isAdmin();
     }
 
@@ -83,15 +137,46 @@ service cloud.firestore {
     match /media_sunday_school/{mediaId} { allow read: if isMember() && (resource.data.enabled == true || isAdmin()); allow write: if isAdmin(); }
 
     match /prayer_callbacks/{requestId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() ||
+        (isMember() &&
+          (
+            resource.data.memberUid == request.auth.uid ||
+            (request.auth.token.phone_number != null && resource.data.memberPhone == request.auth.token.phone_number)
+          ));
+      allow create: if isMember();
+      allow update, delete: if isAdmin();
     }
 
     match /prayer_requests/{requestId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() ||
+        (isMember() &&
+          (
+            resource.data.memberUid == request.auth.uid ||
+            (request.auth.token.phone_number != null && resource.data.memberPhone == request.auth.token.phone_number)
+          ));
+      allow create: if isMember();
+      allow update, delete: if isAdmin();
     }
 
     match /prayer_cell/{memberId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin() ||
+        (isMember() &&
+          (
+            resource.data.memberUid == request.auth.uid ||
+            (request.auth.token.phone_number != null && resource.data.memberPhone == request.auth.token.phone_number)
+          ));
+      allow create: if isMember();
+      allow update, delete: if isAdmin();
+    }
+
+    match /highlights/{highlightId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /gospel_tracts/{tractId} {
+      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow write: if isAdmin();
     }
   }
 }

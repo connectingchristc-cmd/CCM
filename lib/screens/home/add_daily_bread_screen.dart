@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
+import '../../core/media_upload_service.dart';
 import '../../core/notification_service.dart';
 
 class AddDailyBreadScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _AddDailyBreadScreenState extends State<AddDailyBreadScreen> {
   final _imageUrlController = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _isUploadingImage = false;
   bool _sendNotification = false;
 
   Future<void> _submitDailyBread() async {
@@ -185,25 +187,73 @@ class _AddDailyBreadScreenState extends State<AddDailyBreadScreen> {
 
                 TextFormField(
                   controller: _imageUrlController,
-
+                  readOnly: true,
                   decoration: InputDecoration(
-                    labelText: 'Image URL (Optional)',
-
-                    hintText: 'https://example.com/image.jpg',
-
+                    labelText: _imageUrlController.text.isEmpty
+                        ? 'Upload image from mobile'
+                        : 'Image uploaded',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
 
                       borderSide: const BorderSide(color: ccmBlue, width: 2),
                     ),
-
                     prefixIcon: const Icon(Icons.image, color: ccmBlue),
+                    suffixIcon: _isUploadingImage
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : IconButton(
+                            onPressed: () async {
+                              setState(() => _isUploadingImage = true);
+                              try {
+                                final uploadedUrl = await MediaUploadService.pickAndUploadImage(
+                                  folder: 'daily_bread_images',
+                                );
+                                if (uploadedUrl != null) {
+                                  setState(() {
+                                    _imageUrlController.text = uploadedUrl;
+                                  });
+                                }
+                              } catch (error) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Image upload failed: $error'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isUploadingImage = false);
+                                }
+                              }
+                            },
+                            icon: const Icon(Icons.file_upload_outlined),
+                          ),
                   ),
                 ),
+
+                if (_imageUrlController.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      _imageUrlController.text,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 16),
 

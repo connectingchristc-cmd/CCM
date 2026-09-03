@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
-import '../home/add_daily_bread_screen.dart';
+import '../../core/media_upload_service.dart';
+import 'daily_devotion_manage_screen.dart';
+import 'upcoming_events_manage_screen.dart';
 import '../songs/songs_screen.dart';
 
 class AdminManageScreen extends StatelessWidget {
@@ -11,8 +13,9 @@ class AdminManageScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!isAdmin)
+    if (!isAdmin) {
       return const Scaffold(body: Center(child: Text('Admin access required')));
+    }
     final items = <_ManageItem>[
       _ManageItem(
         'Add Songs',
@@ -36,17 +39,10 @@ class AdminManageScreen extends StatelessWidget {
         assetPath: 'assets/service.png',
       ),
       _ManageItem(
-        'Add Event',
-        'Manage major upcoming homepage events',
+        'Add Upcoming Events',
+        'Create, edit, disable and reorder upcoming events',
         Icons.event_outlined,
-        () => _go(
-          context,
-          const ContentManagerPage(
-            title: 'Upcoming Events',
-            collection: 'homepage_events',
-            kind: ContentKind.event,
-          ),
-        ),
+        () => _go(context, const UpcomingEventsManageScreen()),
         assetPath: 'assets/events.png',
       ),
       _ManageItem(
@@ -85,6 +81,34 @@ class AdminManageScreen extends StatelessWidget {
         assetPath: 'assets/testimonials.png',
       ),
       _ManageItem(
+        'Highlights',
+        'Manage service/event/set highlights and popup visibility',
+        Icons.auto_awesome_outlined,
+        () => _go(
+          context,
+          const ContentManagerPage(
+            title: 'Highlights',
+            collection: 'highlights',
+            kind: ContentKind.highlight,
+          ),
+        ),
+        assetPath: 'assets/events.png',
+      ),
+      _ManageItem(
+        'Gospel',
+        'Upload, edit and delete gospel tracts (image/pdf/word)',
+        Icons.menu_book_outlined,
+        () => _go(
+          context,
+          const ContentManagerPage(
+            title: 'Gospel',
+            collection: 'gospel_tracts',
+            kind: ContentKind.gospel,
+          ),
+        ),
+        assetPath: 'assets/about.png',
+      ),
+      _ManageItem(
         'Prayer Request',
         'Callbacks, prayers and prayer-cell members',
         Icons.volunteer_activism_outlined,
@@ -92,10 +116,10 @@ class AdminManageScreen extends StatelessWidget {
         assetPath: 'assets/prayerrequest.png',
       ),
       _ManageItem(
-        'Add Daily Bread',
-        'Add reference, Bible verse and optional image',
+        'Add Daily Devotion',
+        'Create, edit, disable and reorder daily devotion images',
         Icons.menu_book_outlined,
-        () => _go(context, const AddDailyBreadScreen()),
+        () => _go(context, const DailyDevotionManageScreen()),
         assetPath: 'assets/dailybread.png',
       ),
       _ManageItem(
@@ -137,8 +161,8 @@ class AdminManageScreen extends StatelessWidget {
       body: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 18, 16, 28),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 12),
-        itemBuilder: (_, index) => _ManageCard(item: items[index]),
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) => _ManageCard(item: items[index]),
       ),
     );
   }
@@ -184,7 +208,7 @@ class _ManageCard extends StatelessWidget {
                       fit: BoxFit.contain,
                       color: Colors.white,
                       colorBlendMode: BlendMode.multiply,
-                      errorBuilder: (_, __, ___) =>
+                      errorBuilder: (context, error, stackTrace) =>
                           Icon(item.icon, color: ccmRed, size: 28),
                     ),
             ),
@@ -217,7 +241,7 @@ class _ManageCard extends StatelessWidget {
   );
 }
 
-enum ContentKind { slider, event, card, testimonial, stream, about }
+enum ContentKind { slider, event, card, testimonial, stream, about, highlight, gospel }
 
 class ContentManagerPage extends StatelessWidget {
   final String title;
@@ -259,8 +283,8 @@ class ContentManagerPage extends StatelessWidget {
               ListView.separated(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 90),
                 itemCount: docs.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (_, index) => _ContentTile(
+                separatorBuilder: (context, index) => const SizedBox(height: 10),
+                itemBuilder: (context, index) => _ContentTile(
                   doc: docs[index],
                   collection: collection,
                   kind: kind,
@@ -303,34 +327,65 @@ class _ContentTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
         title: Text(
-          data['title']?.toString() ?? 'Untitled',
+            collection.startsWith('prayer_')
+            ? (data['name']?.toString().trim().isNotEmpty == true
+              ? data['name'].toString()
+              : 'Prayer Request')
+            : data['title']?.toString() ?? 'Untitled',
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           kind == ContentKind.testimonial
-              ? '${data['name'] ?? ''} • ${data['category'] ?? ''}\n${data['testimony'] ?? data['details'] ?? data['subtitle'] ?? ''}'
+              ? '${data['testimony'] ?? data['details'] ?? data['subtitle'] ?? ''}'
+              : collection.startsWith('prayer_')
+              ? '${data['name'] ?? ''} • ${data['phone'] ?? data['mobile'] ?? ''}\n${data['details'] ?? data['prayerRequest'] ?? data['callbackDetails'] ?? data['place'] ?? ''}\n${data['isRead'] == true ? 'Read' : 'Unread'}'
+              : kind == ContentKind.gospel
+              ? '${data['details'] ?? ''}\n${data['fileUrl'] ?? ''}\n${data['enabled'] == false ? 'Hidden' : 'Visible'}'
+              : kind == ContentKind.highlight
+              ? '${data['details'] ?? ''}\n${data['highlightBasis'] ?? ''}${(data['eventName']?.toString().trim().isNotEmpty == true) ? ' • ${data['eventName']}' : ''}${data['addToHomePopup'] == true ? ' • Popup' : ''}'
               : '${data['details'] ?? data['subtitle'] ?? ''}\n${data['enabled'] == false ? 'Hidden' : 'Visible'}',
         ),
         isThreeLine: true,
         trailing: Wrap(
           children: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, color: ccmRed),
-              onPressed: () => ContentEditor.show(
-                context,
-                collection: collection,
-                kind: kind,
-                doc: doc,
+            if (collection.startsWith('prayer_'))
+              IconButton(
+                icon: Icon(
+                  data['isRead'] == true
+                      ? Icons.mark_email_read_outlined
+                      : Icons.mark_email_unread_outlined,
+                  color: ccmBlue,
+                ),
+                tooltip: data['isRead'] == true ? 'Mark unread' : 'Mark read',
+                onPressed: () async {
+                  await FirebaseFirestore.instance
+                      .collection(collection)
+                      .doc(doc.id)
+                      .update({
+                        'isRead': data['isRead'] == true ? false : true,
+                        'updated_at': FieldValue.serverTimestamp(),
+                      });
+                },
               ),
-            ),
+            if (!collection.startsWith('prayer_'))
+              IconButton(
+                icon: const Icon(Icons.edit_outlined, color: ccmRed),
+                onPressed: () => ContentEditor.show(
+                  context,
+                  collection: collection,
+                  kind: kind,
+                  doc: doc,
+                ),
+              ),
             IconButton(
               icon: const Icon(Icons.delete_outline, color: ccmRed),
               onPressed: () async {
-                if (await _confirm(context))
+                if (await _confirm(context)) {
                   await FirebaseFirestore.instance
                       .collection(collection)
                       .doc(doc.id)
                       .delete();
+                }
               },
             ),
           ],
@@ -373,9 +428,14 @@ class ContentEditor {
     final category = TextEditingController(
       text: data['category']?.toString() ?? '',
     );
-    final video = TextEditingController(
-      text: data['videoUrl']?.toString() ?? '',
+    final highlightBasis = TextEditingController(
+      text: data['highlightBasis']?.toString() ?? '',
     );
+    final eventName = TextEditingController(
+      text: data['eventName']?.toString() ?? '',
+    );
+    var videoUrl = data['videoUrl']?.toString() ?? '';
+    var fileUrl = data['fileUrl']?.toString() ?? '';
     final details = TextEditingController(
       text:
           data['testimony']?.toString() ??
@@ -383,14 +443,16 @@ class ContentEditor {
           data['subtitle']?.toString() ??
           '',
     );
-    final image = TextEditingController(
-      text: data['imageUrl']?.toString() ?? '',
-    );
+    var imageUrl = data['imageUrl']?.toString() ?? data['photoUrl']?.toString() ?? '';
     final order = TextEditingController(text: '${data['sortOrder'] ?? 0}');
     final actionType = TextEditingController(
       text: data['actionType']?.toString() ?? 'comingSoon',
     );
     bool enabled = data['enabled'] != false;
+    bool addToHomePopup = data['addToHomePopup'] == true;
+    var isUploadingImage = false;
+    var isUploadingVideo = false;
+    var isUploadingFile = false;
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
@@ -400,12 +462,23 @@ class ContentEditor {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (kind == ContentKind.testimonial)
+                if (kind == ContentKind.highlight)
                   TextField(
-                    controller: name,
-                    decoration: const InputDecoration(labelText: 'Name *'),
+                    controller: highlightBasis,
+                    decoration: const InputDecoration(
+                      labelText: 'Highlight Basis',
+                      helperText: 'service / event / set',
+                    ),
                   ),
-                if (kind == ContentKind.testimonial) const SizedBox(height: 10),
+                if (kind == ContentKind.highlight) const SizedBox(height: 10),
+                if (kind == ContentKind.highlight)
+                  TextField(
+                    controller: eventName,
+                    decoration: const InputDecoration(
+                      labelText: 'Event Name (Optional)',
+                    ),
+                  ),
+                if (kind == ContentKind.highlight) const SizedBox(height: 10),
                 TextField(
                   controller: title,
                   decoration: InputDecoration(
@@ -427,12 +500,57 @@ class ContentEditor {
                   ),
                 ),
                 const SizedBox(height: 10),
-                TextField(
-                  controller: image,
-                  decoration: const InputDecoration(
-                    labelText: 'Photo URL (optional)',
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: isUploadingImage
+                            ? null
+                            : () async {
+                                setState(() => isUploadingImage = true);
+                                try {
+                                  final uploadedUrl = await MediaUploadService.pickAndUploadImage(
+                                    folder: collection,
+                                  );
+                                  if (uploadedUrl != null) {
+                                    setState(() => imageUrl = uploadedUrl);
+                                  }
+                                } catch (error) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Image upload failed: $error'),
+                                    ),
+                                  );
+                                } finally {
+                                  setState(() => isUploadingImage = false);
+                                }
+                              },
+                        icon: const Icon(Icons.file_upload_outlined),
+                        label: Text(
+                          isUploadingImage
+                              ? 'Uploading image...'
+                              : imageUrl.isEmpty
+                              ? 'Upload image from mobile'
+                              : 'Replace uploaded image',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (imageUrl.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      imageUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ],
                 if (kind == ContentKind.testimonial) ...[
                   const SizedBox(height: 10),
                   TextField(
@@ -440,12 +558,113 @@ class ContentEditor {
                     decoration: const InputDecoration(labelText: 'Category'),
                   ),
                   const SizedBox(height: 10),
-                  TextField(
-                    controller: video,
-                    decoration: const InputDecoration(
-                      labelText: 'Video URL (optional)',
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isUploadingVideo
+                              ? null
+                              : () async {
+                                  setState(() => isUploadingVideo = true);
+                                  try {
+                                    final uploadedUrl = await MediaUploadService.pickAndUploadVideo(
+                                      folder: 'testimonials/videos',
+                                    );
+                                    if (uploadedUrl != null) {
+                                      setState(() => videoUrl = uploadedUrl);
+                                    }
+                                  } catch (error) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Video upload failed: $error'),
+                                      ),
+                                    );
+                                  } finally {
+                                    setState(() => isUploadingVideo = false);
+                                  }
+                                },
+                          icon: const Icon(Icons.video_file_outlined),
+                          label: Text(
+                            isUploadingVideo
+                                ? 'Uploading video...'
+                                : videoUrl.isEmpty
+                                ? 'Upload video from mobile'
+                                : 'Replace uploaded video',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  if (videoUrl.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Video uploaded',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+                if (kind == ContentKind.gospel) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: isUploadingFile
+                              ? null
+                              : () async {
+                                  setState(() => isUploadingFile = true);
+                                  try {
+                                    final uploadedUrl = await MediaUploadService.pickAndUploadDocument(
+                                      folder: 'gospel_tracts/files',
+                                    );
+                                    if (uploadedUrl != null) {
+                                      setState(() => fileUrl = uploadedUrl);
+                                    }
+                                  } catch (error) {
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('File upload failed: $error'),
+                                      ),
+                                    );
+                                  } finally {
+                                    setState(() => isUploadingFile = false);
+                                  }
+                                },
+                          icon: const Icon(Icons.upload_file_outlined),
+                          label: Text(
+                            isUploadingFile
+                                ? 'Uploading file...'
+                                : fileUrl.isEmpty
+                                ? 'Upload file (Image/PDF/Word)'
+                                : 'Replace uploaded file',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (fileUrl.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'File uploaded',
+                          style: TextStyle(
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
                 const SizedBox(height: 10),
                 TextField(
@@ -460,6 +679,12 @@ class ContentEditor {
                       labelText: 'Action type',
                       helperText: 'services, events, dailyBread or comingSoon',
                     ),
+                  ),
+                if (kind == ContentKind.highlight)
+                  SwitchListTile(
+                    title: const Text('Add highlights to Home Page popup'),
+                    value: addToHomePopup,
+                    onChanged: (value) => setState(() => addToHomePopup = value),
                   ),
                 SwitchListTile(
                   title: const Text('Visible'),
@@ -483,29 +708,34 @@ class ContentEditor {
       ),
     );
     if (saved != true ||
-        title.text.trim().isEmpty ||
-        (kind == ContentKind.testimonial &&
-            (name.text.trim().isEmpty || details.text.trim().isEmpty))) {
+      title.text.trim().isEmpty ||
+      (kind == ContentKind.testimonial && details.text.trim().isEmpty) ||
+      (kind == ContentKind.gospel && fileUrl.trim().isEmpty)) {
       return;
     }
     final payload = <String, dynamic>{
       'title': title.text.trim(),
       'name': name.text.trim(),
       'category': category.text.trim(),
-      'videoUrl': video.text.trim(),
+      'videoUrl': videoUrl.trim(),
+      'fileUrl': fileUrl.trim(),
       'subtitle': details.text.trim(),
       'details': details.text.trim(),
       'testimony': details.text.trim(),
-      'imageUrl': image.text.trim(),
-      'photoUrl': image.text.trim(),
+      'imageUrl': imageUrl.trim(),
+      'photoUrl': imageUrl.trim(),
+      'highlightBasis': highlightBasis.text.trim(),
+      'eventName': eventName.text.trim(),
+      'addToHomePopup': addToHomePopup,
       'sortOrder': int.tryParse(order.text) ?? 0,
       'enabled': enabled,
       'updated_at': FieldValue.serverTimestamp(),
     };
-    if (kind == ContentKind.card)
+    if (kind == ContentKind.card) {
       payload['actionType'] = actionType.text.trim().isEmpty
           ? 'comingSoon'
           : actionType.text.trim();
+    }
     try {
       if (doc == null) {
         payload['created_at'] = FieldValue.serverTimestamp();
@@ -541,6 +771,8 @@ class ContentEditor {
     ContentKind.testimonial => 'Testimonial',
     ContentKind.stream => 'Live Stream',
     ContentKind.about => 'About Us',
+    ContentKind.highlight => 'Highlight',
+    ContentKind.gospel => 'Gospel',
   };
 }
 
@@ -560,7 +792,7 @@ class MediaManagerPage extends StatelessWidget {
     body: ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: categories.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) => _ManageCard(
         item: _ManageItem(
           categories[index],

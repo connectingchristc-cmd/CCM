@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../common/coming_soon_screen.dart';
 import 'favorites_screen.dart';
+import 'my_prayer_requests_screen.dart';
 import 'setlists_screen.dart';
+import 'updates_screen.dart';
 
 class MoreScreen extends StatefulWidget {
   final bool isAdmin;
@@ -95,6 +97,31 @@ class _MoreScreenState extends State<MoreScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => const SetlistsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: ccmRed,
+                  child: Icon(Icons.notifications_outlined, color: ccmWhite),
+                ),
+                title: const Text(
+                  'Updates',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Latest announcements and notifications'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UpdatesScreen(),
                     ),
                   );
                 },
@@ -219,6 +246,31 @@ class _MoreScreenState extends State<MoreScreen> {
                     MaterialPageRoute(
                       builder: (context) =>
                           const ComingSoonScreen(title: 'Prayer Request'),
+                    ),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Card(
+              child: ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: ccmRed,
+                  child: Icon(Icons.person_outline, color: ccmWhite),
+                ),
+                title: const Text(
+                  'My Prayer Requests',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Track your submitted prayer requests'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyPrayerRequestsScreen(),
                     ),
                   );
                 },
