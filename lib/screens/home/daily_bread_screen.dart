@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -18,16 +19,16 @@ class DailyBreadScreen extends StatefulWidget {
 }
 
 enum _Testament { old, newTestament }
-enum _BibleLanguage { english, telugu }
+enum _BibleDisplayMode { both, english, telugu }
 
 class _DailyBreadScreenState extends State<DailyBreadScreen> {
   late Future<List<_BibleChapter>> _chaptersFuture;
   _Testament _selectedTestament = _Testament.old;
-  _BibleLanguage _selectedLanguage = _BibleLanguage.english;
+  _BibleDisplayMode _displayMode = _BibleDisplayMode.both;
+  double _bibleFontSize = 19;
   String? _selectedBook;
   int? _selectedChapter;
   final TextEditingController _referenceController = TextEditingController();
-  String _referenceMessage = '';
   String _bibleSourceText = 'Loading Bible...';
 
   @override
@@ -113,8 +114,9 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
   }
 
   List<_BibleBookMeta> _booksForTestament() {
+    final selectedKey = _selectedTestament == _Testament.old ? 'old' : 'new';
     return _bibleBooks
-        .where((b) => b.testament == _selectedTestament.name)
+      .where((b) => b.testament == selectedKey)
         .toList(growable: false);
   }
 
@@ -144,22 +146,29 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
   }
 
   void _jumpToReference() {
+    final messenger = ScaffoldMessenger.of(context);
     final input = _referenceController.text.trim();
     if (input.isEmpty) {
-      setState(() => _referenceMessage = 'Enter a reference like John 1:1');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Enter a reference like John 1:1')),
+      );
       return;
     }
 
     final match = RegExp(r'^(.+?)\s+(\d+)(?::\d+)?$').firstMatch(input);
     if (match == null) {
-      setState(() => _referenceMessage = 'Invalid format. Example: John 1:1');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Invalid format. Example: John 1:1')),
+      );
       return;
     }
 
     final rawBook = match.group(1)!.trim();
     final chapter = int.tryParse(match.group(2)!);
     if (chapter == null || chapter <= 0) {
-      setState(() => _referenceMessage = 'Invalid chapter number.');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Invalid chapter number.')),
+      );
       return;
     }
 
@@ -172,12 +181,16 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
       }
     }
     if (target == null) {
-      setState(() => _referenceMessage = 'Book not found.');
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Book not found.')),
+      );
       return;
     }
     final resolvedTarget = target;
     if (chapter > resolvedTarget.chapters) {
-      setState(() => _referenceMessage = 'Chapter out of range for ${resolvedTarget.book}.');
+      messenger.showSnackBar(
+        SnackBar(content: Text('Chapter out of range for ${resolvedTarget.book}.')),
+      );
       return;
     }
 
@@ -187,8 +200,11 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
           : _Testament.newTestament;
       _selectedBook = resolvedTarget.book;
       _selectedChapter = chapter;
-      _referenceMessage = 'Jumped to ${resolvedTarget.book} $chapter';
     });
+
+    messenger.showSnackBar(
+      SnackBar(content: Text('Jumped to ${resolvedTarget.book} $chapter')),
+    );
   }
 
   Future<void> _importBibleJsonFromDevice() async {
@@ -205,13 +221,8 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
       }
 
       final bytes = await file.readAsBytes();
-
-      final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
-      final rawChapters = (decoded['chapters'] as List<dynamic>?) ?? const [];
-      final chapters = rawChapters
-          .cast<Map<String, dynamic>>()
-          .map(_BibleChapter.fromMap)
-          .toList();
+        final decoded = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+        final chapters = _decodeBibleChapters(decoded);
 
       if (chapters.isEmpty) {
         messenger.showSnackBar(
@@ -234,6 +245,100 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text('Import failed: $error')),
       );
+    }
+  }
+
+  List<_BibleChapter> _decodeBibleChapters(Map<String, dynamic> decoded) {
+    final rawChapters = (decoded['chapters'] as List<dynamic>?) ?? const [];
+    return rawChapters
+        .cast<Map<String, dynamic>>()
+        .map(_BibleChapter.fromMap)
+        .toList();
+  }
+
+  Future<void> _importBibleJsonFromInternet() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final urlController = TextEditingController();
+
+    final url = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Import Bible JSON from Internet'),
+          content: TextField(
+            controller: urlController,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'https://.../offline_bible_te_en.json',
+            ),
+            onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, urlController.text.trim()),
+              child: const Text('Import'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final rawUrl = (url ?? '').trim();
+    if (rawUrl.isEmpty) {
+      return;
+    }
+
+    final uri = Uri.tryParse(rawUrl);
+    if (uri == null || (!uri.hasScheme || (uri.scheme != 'http' && uri.scheme != 'https'))) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Enter a valid http/https URL.')),
+      );
+      return;
+    }
+
+    HttpClient? client;
+    try {
+      client = HttpClient();
+      final request = await client.getUrl(uri);
+      final response = await request.close();
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw HttpException('HTTP ${response.statusCode}', uri: uri);
+      }
+
+      final body = await response.transform(utf8.decoder).join();
+      final decoded = jsonDecode(body) as Map<String, dynamic>;
+      final chapters = _decodeBibleChapters(decoded);
+
+      if (chapters.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(content: Text('No chapters found in JSON file.')),
+        );
+        return;
+      }
+
+      await _replaceBibleInFirestore(chapters);
+
+      if (!mounted) return;
+      setState(() {
+        _chaptersFuture = _loadBibleData();
+      });
+
+      messenger.showSnackBar(
+        SnackBar(content: Text('Bible import completed (${chapters.length} chapters).')),
+      );
+    } catch (error) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('Internet import failed: $error')),
+      );
+    } finally {
+      client?.close(force: true);
+      urlController.dispose();
     }
   }
 
@@ -285,6 +390,12 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
           actions: [
             if (widget.isAdmin)
               IconButton(
+                tooltip: 'Import Bible JSON from Internet',
+                icon: const Icon(Icons.cloud_download_outlined),
+                onPressed: _importBibleJsonFromInternet,
+              ),
+            if (widget.isAdmin)
+              IconButton(
                 tooltip: 'Import Bible JSON',
                 icon: const Icon(Icons.upload_file_outlined),
                 onPressed: _importBibleJsonFromDevice,
@@ -327,7 +438,7 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
                 const _SectionTitle('Telugu & English Bible'),
                 const SizedBox(height: 8),
                 const Text(
-                  'Available online via imported chapters and offline via cache or bundled file.',
+                  'Telugu + English reading with offline cache and admin JSON import.',
                   style: TextStyle(color: ccmMutedInk, fontSize: 12),
                 ),
                 const SizedBox(height: 10),
@@ -401,10 +512,13 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
         if (snapshot.hasError) {
           return _SimpleMessageCard('Offline Bible failed to load.');
         }
+
         if (snapshot.connectionState != ConnectionState.done) {
           return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 18),
-            child: Center(child: CircularProgressIndicator(color: ccmRed)),
+            padding: EdgeInsets.symmetric(vertical: 28),
+            child: Center(
+              child: CircularProgressIndicator(color: ccmRed),
+            ),
           );
         }
 
@@ -412,118 +526,264 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
         final index = _chapterIndex(all);
         final books = _booksForTestament();
         final selectedBook = _selectedBookMeta(books);
+
         if (selectedBook == null) {
-          return const _SimpleMessageCard('Offline Bible content not available.');
+          return const _SimpleMessageCard(
+            'Offline Bible content not available.',
+          );
         }
+
         final chapterCount = selectedBook.chapters;
-        final chapterOptions = List<int>.generate(chapterCount, (i) => i + 1);
+        final chapterOptions = List<int>.generate(
+          chapterCount,
+          (index) => index + 1,
+        );
+
         final selectedChapter = (_selectedChapter != null &&
                 _selectedChapter! >= 1 &&
                 _selectedChapter! <= chapterCount)
             ? _selectedChapter!
             : 1;
-        final selectedFromData = index[
-          _chapterKey(_selectedTestament.name, selectedBook.book, selectedChapter)
-        ];
-        final verses = _selectedLanguage == _BibleLanguage.english
-            ? selectedFromData?.english
-            : selectedFromData?.telugu;
 
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Old Testament'),
-                      selected: _selectedTestament == _Testament.old,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedTestament = _Testament.old;
-                          _selectedBook = null;
-                          _selectedChapter = null;
-                        });
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('New Testament'),
-                      selected: _selectedTestament == _Testament.newTestament,
-                      onSelected: (_) {
-                        setState(() {
-                          _selectedTestament = _Testament.newTestament;
-                          _selectedBook = null;
-                          _selectedChapter = null;
-                        });
-                      },
-                    ),
-                  ],
+        final chapter = index[
+          _chapterKey(
+            _selectedTestament == _Testament.old ? 'old' : 'new',
+            selectedBook.book,
+            selectedChapter,
+          )
+        ];
+
+        final english = chapter?.english ?? const <int, String>{};
+        final telugu = chapter?.telugu ?? const <int, String>{};
+
+        final verseNumbers = <int>{
+          ...english.keys,
+          ...telugu.keys,
+        }.toList()
+          ..sort();
+
+        final bookLabel = _bookDisplayName(selectedBook.book);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildBibleSelectorCard(
+              selectedBook: selectedBook,
+              selectedChapter: selectedChapter,
+              chapterOptions: chapterOptions,
+              bookLabel: bookLabel,
+            ),
+            const SizedBox(height: 18),
+            _buildBibleReadingCard(
+              bookLabel: bookLabel,
+              chapterNumber: selectedChapter,
+              english: english,
+              telugu: telugu,
+              verseNumbers: verseNumbers,
+            ),
+            const SizedBox(height: 14),
+            _buildChapterNavigation(
+              selectedBook: selectedBook,
+              selectedChapter: selectedChapter,
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: Text(
+                _bibleSourceText,
+                style: const TextStyle(
+                  color: ccmMutedInk,
+                  fontSize: 11,
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('English'),
-                      selected: _selectedLanguage == _BibleLanguage.english,
-                      onSelected: (_) {
-                        setState(() => _selectedLanguage = _BibleLanguage.english);
-                      },
-                    ),
-                    ChoiceChip(
-                      label: const Text('Telugu'),
-                      selected: _selectedLanguage == _BibleLanguage.telugu,
-                      onSelected: (_) {
-                        setState(() => _selectedLanguage = _BibleLanguage.telugu);
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _referenceController,
-                  decoration: InputDecoration(
-                    labelText: 'Jump to reference',
-                    hintText: 'Example: John 1:1',
-                    suffixIcon: IconButton(
-                      onPressed: _jumpToReference,
-                      icon: const Icon(Icons.search),
-                    ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            _buildBibleReadingPlans(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBibleSelectorCard({
+    required _BibleBookMeta selectedBook,
+    required int selectedChapter,
+    required List<int> chapterOptions,
+    required String bookLabel,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111A2E),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: const Color(0xFFD4A72C).withValues(alpha: .28),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .10),
+            blurRadius: 16,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 520;
+
+              final testamentDropdown = _buildBibleDropdown<_Testament>(
+                value: _selectedTestament,
+                items: const [
+                  DropdownMenuItem(
+                    value: _Testament.old,
+                    child: Text('Old Testament (పాత నిబంధన)'),
                   ),
-                  onSubmitted: (_) => _jumpToReference(),
-                ),
-                if (_referenceMessage.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    _referenceMessage,
-                    style: const TextStyle(color: ccmMutedInk, fontSize: 12),
+                  DropdownMenuItem(
+                    value: _Testament.newTestament,
+                    child: Text('New Testament (క్రొత్త నిబంధన)'),
                   ),
                 ],
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  initialValue: selectedBook.book,
-                  decoration: const InputDecoration(labelText: 'Book'),
-                  items: books
-                      .map((book) => DropdownMenuItem(value: book.book, child: Text(book.book)))
-                      .toList(),
-                  onChanged: (value) {
-                    if (value == null) return;
-                    setState(() {
-                      _selectedBook = value;
-                      _selectedChapter = 1;
-                    });
-                  },
+                onChanged: (value) {
+                  if (value == null) return;
+                  setState(() {
+                    _selectedTestament = value;
+                    _selectedBook = null;
+                    _selectedChapter = 1;
+                  });
+                },
+              );
+
+              final bookDropdown = _buildBibleDropdown<String>(
+                value: selectedBook.book,
+                items: _booksForTestament()
+                    .map(
+                      (book) => DropdownMenuItem<String>(
+                        value: book.book,
+                        child: Text(
+                          _bookDisplayName(book.book),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+                  final book = _booksForTestament().firstWhere(
+                    (item) => item.book == value,
+                  );
+                  setState(() {
+                    _selectedBook = book.book;
+                    _selectedChapter = 1;
+                  });
+                },
+              );
+
+              if (compact) {
+                return Column(
+                  children: [
+                    testamentDropdown,
+                    const SizedBox(height: 10),
+                    bookDropdown,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: testamentDropdown),
+                  const SizedBox(width: 12),
+                  Expanded(child: bookDropdown),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Text(
+                'Chapter $selectedChapter',
+                style: const TextStyle(
+                  color: Color(0xFFF5C451),
+                  fontSize: 19,
+                  fontWeight: FontWeight.w800,
                 ),
-                const SizedBox(height: 10),
-                DropdownButtonFormField<int>(
+              ),
+              const Spacer(),
+              _buildFontButton(
+                label: 'A+',
+                onPressed: () {
+                  setState(() {
+                    _bibleFontSize = (_bibleFontSize + 1).clamp(15, 28);
+                  });
+                },
+              ),
+              const SizedBox(width: 8),
+              _buildFontButton(
+                label: 'A−',
+                onPressed: () {
+                  setState(() {
+                    _bibleFontSize = (_bibleFontSize - 1).clamp(15, 28);
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Text(
+                'Display',
+                style: TextStyle(
+                  color: Color(0xFFB8C4D8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildDisplayChip(
+                        label: 'Both',
+                        mode: _BibleDisplayMode.both,
+                      ),
+                      const SizedBox(width: 6),
+                      _buildDisplayChip(
+                        label: 'English',
+                        mode: _BibleDisplayMode.english,
+                      ),
+                      const SizedBox(width: 6),
+                      _buildDisplayChip(
+                        label: 'తెలుగు',
+                        mode: _BibleDisplayMode.telugu,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<int>(
                   initialValue: selectedChapter,
-                  decoration: const InputDecoration(labelText: 'Chapter'),
+                  isExpanded: true,
+                  decoration: _bibleInputDecoration('Chapter'),
+                  dropdownColor: const Color(0xFFF5EEE5),
                   items: chapterOptions
-                      .map((ch) => DropdownMenuItem(value: ch, child: Text(ch.toString())))
+                      .map(
+                        (chapter) => DropdownMenuItem<int>(
+                          value: chapter,
+                          child: Text('Chapter $chapter'),
+                        ),
+                      )
                       .toList(),
                   onChanged: (value) {
                     if (value == null) return;
@@ -532,52 +792,530 @@ class _DailyBreadScreenState extends State<DailyBreadScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  '${selectedBook.book} $selectedChapter',
-                  style: const TextStyle(
-                    color: ccmInk,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
+              ),
+              const SizedBox(width: 10),
+              IconButton(
+                tooltip: 'Search reference',
+                onPressed: _showReferenceSearch,
+                icon: const Icon(
+                  Icons.search_rounded,
+                  color: Color(0xFFF5C451),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _bibleSourceText,
-                  style: const TextStyle(color: ccmMutedInk, fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBibleReadingCard({
+    required String bookLabel,
+    required int chapterNumber,
+    required Map<int, String> english,
+    required Map<int, String> telugu,
+    required List<int> verseNumbers,
+  }) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF111A2E),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: const Color(0xFFD4A72C).withValues(alpha: .28),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .09),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: verseNumbers.isEmpty
+          ? const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Text(
+                'This chapter is not available yet.\n'
+                'Please import licensed Telugu and English Bible JSON.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Color(0xFF9AA9C2),
+                  height: 1.5,
                 ),
-                const SizedBox(height: 8),
-                if (verses == null || verses.isEmpty)
-                  const Text(
-                    'Offline text for this chapter is not added yet.\nAdd licensed Telugu and English Bible JSON for full coverage.',
-                    style: TextStyle(color: ccmMutedInk, height: 1.4),
-                  )
-                else
-                  for (final entry in verses.entries)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text(
-                        '${entry.key}. ${entry.value}',
-                        style: const TextStyle(color: ccmMutedInk, height: 1.4),
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.menu_book_rounded,
+                      color: Color(0xFFF5C451),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$bookLabel • Chapter $chapterNumber',
+                      style: const TextStyle(
+                        color: Color(0xFFF5C451),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                const SizedBox(height: 8),
-                const Divider(height: 18),
-                const Text(
-                  'Bible Reading Plans',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                const Text('1. 7-Day Faith Starter: John 1-7'),
-                const Text('2. 30-Day Psalms Journey: Psalms 1-30'),
-                const Text('3. Gospel Walk: Matthew, Mark, Luke, John'),
+                const SizedBox(height: 16),
+                for (var i = 0; i < verseNumbers.length; i++) ...[
+                  _buildVerse(
+                    verseNumber: verseNumbers[i],
+                    english: english[verseNumbers[i]],
+                    telugu: telugu[verseNumbers[i]],
+                  ),
+                  if (i != verseNumbers.length - 1)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      child: Divider(
+                        height: 1,
+                        color: const Color(0xFF70809A).withValues(alpha: .18),
+                      ),
+                    ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  Widget _buildVerse({
+    required int verseNumber,
+    required String? english,
+    required String? telugu,
+  }) {
+    final showTelugu = _displayMode == _BibleDisplayMode.both ||
+        _displayMode == _BibleDisplayMode.telugu;
+    final showEnglish = _displayMode == _BibleDisplayMode.both ||
+        _displayMode == _BibleDisplayMode.english;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showTelugu && telugu != null && telugu.trim().isNotEmpty)
+          RichText(
+            text: TextSpan(
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: _bibleFontSize,
+                height: 1.65,
+                fontWeight: FontWeight.w600,
+              ),
+              children: [
+                TextSpan(
+                  text: '$verseNumber. ',
+                  style: const TextStyle(
+                    color: Color(0xFFF5C451),
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                TextSpan(text: telugu.trim()),
               ],
             ),
           ),
+        if (showTelugu &&
+            showEnglish &&
+            telugu != null &&
+            telugu.trim().isNotEmpty &&
+            english != null &&
+            english.trim().isNotEmpty)
+          const SizedBox(height: 12),
+        if (showEnglish && english != null && english.trim().isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(
+              left: showTelugu ? 2 : 0,
+            ),
+            child: RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  color: const Color(0xFFAAB7CB),
+                  fontSize: (_bibleFontSize - 2).clamp(13, 26),
+                  height: 1.55,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w500,
+                ),
+                children: [
+                  if (!showTelugu)
+                    TextSpan(
+                      text: '$verseNumber. ',
+                      style: const TextStyle(
+                        color: Color(0xFFF5C451),
+                        fontWeight: FontWeight.w900,
+                        fontStyle: FontStyle.normal,
+                      ),
+                    ),
+                  TextSpan(text: english.trim()),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildChapterNavigation({
+    required _BibleBookMeta selectedBook,
+    required int selectedChapter,
+  }) {
+    final canGoPrevious = selectedChapter > 1 ||
+        _booksForTestament().indexWhere(
+              (book) => book.book == selectedBook.book,
+            ) >
+            0;
+
+    final canGoNext = selectedChapter < selectedBook.chapters ||
+        _booksForTestament().indexWhere(
+              (book) => book.book == selectedBook.book,
+            ) <
+            _booksForTestament().length - 1;
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: canGoPrevious ? _goToPreviousChapter : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+            label: const Text('Previous'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: ccmBlue,
+              side: BorderSide(
+                color: ccmBlue.withValues(alpha: .45),
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 13),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: canGoNext ? _goToNextChapter : null,
+            icon: const Icon(Icons.chevron_right_rounded),
+            label: const Text('Next'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ccmBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 13),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBibleReadingPlans() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .58),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: ccmSandDark.withValues(alpha: .45),
+        ),
+      ),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Bible Reading Plans',
+            style: TextStyle(
+              color: ccmInk,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text('1. 7-Day Faith Starter: John 1–7'),
+          Text('2. 30-Day Psalms Journey: Psalms 1–30'),
+          Text('3. Gospel Walk: Matthew, Mark, Luke, John'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBibleDropdown<T>({
+    required T value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      initialValue: value,
+      isExpanded: true,
+      dropdownColor: const Color(0xFFF5EEE5),
+      icon: const Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: Color(0xFF33445E),
+      ),
+      style: const TextStyle(
+        color: Color(0xFF263A58),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: _bibleInputDecoration(null),
+      items: items,
+      onChanged: onChanged,
+    );
+  }
+
+  InputDecoration _bibleInputDecoration(String? label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: const Color(0xFFF4F5F7),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: 13,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(
+          color: Color(0xFFBAC4D1),
+        ),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(
+          color: Color(0xFFBAC4D1),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(13),
+        borderSide: const BorderSide(
+          color: Color(0xFFD4A72C),
+          width: 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFontButton({
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: const Color(0xFFE8ECF2),
+      shape: const StadiumBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 18,
+            vertical: 8,
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2C5B8D),
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisplayChip({
+    required String label,
+    required _BibleDisplayMode mode,
+  }) {
+    final selected = _displayMode == mode;
+
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) {
+        setState(() {
+          _displayMode = mode;
+        });
+      },
+      selectedColor: const Color(0xFFD4A72C),
+      backgroundColor: const Color(0xFFE8ECF2),
+      labelStyle: TextStyle(
+        color: selected ? const Color(0xFF111A2E) : const Color(0xFF40516B),
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+      ),
+      visualDensity: VisualDensity.compact,
+      side: BorderSide.none,
+    );
+  }
+
+  void _showReferenceSearch() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Go to Bible Reference'),
+          content: TextField(
+            controller: _referenceController,
+            autofocus: true,
+            textInputAction: TextInputAction.search,
+            decoration: const InputDecoration(
+              hintText: 'Example: John 1:1',
+            ),
+            onSubmitted: (_) {
+              Navigator.pop(dialogContext);
+              _jumpToReference();
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _jumpToReference();
+              },
+              child: const Text('Open'),
+            ),
+          ],
         );
       },
     );
   }
+
+  void _goToPreviousChapter() {
+    final books = _booksForTestament();
+    final currentIndex = books.indexWhere(
+      (book) => book.book == _selectedBookMeta(books)?.book,
+    );
+
+    final currentChapter = _selectedChapter ?? 1;
+
+    if (currentChapter > 1) {
+      setState(() {
+        _selectedChapter = currentChapter - 1;
+      });
+      return;
+    }
+
+    if (currentIndex > 0) {
+      final previousBook = books[currentIndex - 1];
+      setState(() {
+        _selectedBook = previousBook.book;
+        _selectedChapter = previousBook.chapters;
+      });
+    }
+  }
+
+  void _goToNextChapter() {
+    final books = _booksForTestament();
+    final currentBook = _selectedBookMeta(books);
+    if (currentBook == null) return;
+
+    final currentIndex = books.indexWhere(
+      (book) => book.book == currentBook.book,
+    );
+
+    final currentChapter = _selectedChapter ?? 1;
+
+    if (currentChapter < currentBook.chapters) {
+      setState(() {
+        _selectedChapter = currentChapter + 1;
+      });
+      return;
+    }
+
+    if (currentIndex >= 0 && currentIndex < books.length - 1) {
+      final nextBook = books[currentIndex + 1];
+      setState(() {
+        _selectedBook = nextBook.book;
+        _selectedChapter = 1;
+      });
+    }
+  }
+
+  String _bookDisplayName(String englishName) {
+    return '$englishName (${_teluguBookNames[englishName] ?? ''})';
+  }
+
+  static const Map<String, String> _teluguBookNames = {
+    'Genesis': 'ఆదికాండము',
+    'Exodus': 'నిర్గమకాండము',
+    'Leviticus': 'లేవీయకాండము',
+    'Numbers': 'సంఖ్యాకాండము',
+    'Deuteronomy': 'ద్వితీయోపదేశకాండము',
+    'Joshua': 'యెహోషువ',
+    'Judges': 'న్యాయాధిపతులు',
+    'Ruth': 'రూతు',
+    '1 Samuel': '1 సమూయేలు',
+    '2 Samuel': '2 సమూయేలు',
+    '1 Kings': '1 రాజులు',
+    '2 Kings': '2 రాజులు',
+    '1 Chronicles': '1 దినవృత్తాంతములు',
+    '2 Chronicles': '2 దినవృత్తాంతములు',
+    'Ezra': 'ఎజ్రా',
+    'Nehemiah': 'నెహెమ్యా',
+    'Esther': 'ఎస్తేరు',
+    'Job': 'యోబు',
+    'Psalms': 'కీర్తనలు',
+    'Proverbs': 'సామెతలు',
+    'Ecclesiastes': 'ప్రసంగి',
+    'Song of Solomon': 'పరమగీతము',
+    'Isaiah': 'యెషయా',
+    'Jeremiah': 'యిర్మీయా',
+    'Lamentations': 'విలాపవాక్యములు',
+    'Ezekiel': 'యెహెజ్కేలు',
+    'Daniel': 'దానియేలు',
+    'Hosea': 'హోషేయ',
+    'Joel': 'యోవేలు',
+    'Amos': 'ఆమోసు',
+    'Obadiah': 'ఓబద్యా',
+    'Jonah': 'యోనా',
+    'Micah': 'మీకా',
+    'Nahum': 'నహూము',
+    'Habakkuk': 'హబక్కూకు',
+    'Zephaniah': 'జెఫన్యా',
+    'Haggai': 'హగ్గయి',
+    'Zechariah': 'జెకర్యా',
+    'Malachi': 'మలాకీ',
+    'Matthew': 'మత్తయి',
+    'Mark': 'మార్కు',
+    'Luke': 'లూకా',
+    'John': 'యోహాను',
+    'Acts': 'అపొస్తలుల కార్యములు',
+    'Romans': 'రోమీయులకు',
+    '1 Corinthians': '1 కొరింథీయులకు',
+    '2 Corinthians': '2 కొరింథీయులకు',
+    'Galatians': 'గలతీయులకు',
+    'Ephesians': 'ఎఫెసీయులకు',
+    'Philippians': 'ఫిలిప్పీయులకు',
+    'Colossians': 'కొలొస్సయులకు',
+    '1 Thessalonians': '1 థెస్సలొనీకయులకు',
+    '2 Thessalonians': '2 థెస్సలొనీకయులకు',
+    '1 Timothy': '1 తిమోతికి',
+    '2 Timothy': '2 తిమోతికి',
+    'Titus': 'తీతుకు',
+    'Philemon': 'ఫిలేమోనుకు',
+    'Hebrews': 'హెబ్రీయులకు',
+    'James': 'యాకోబు',
+    '1 Peter': '1 పేతురు',
+    '2 Peter': '2 పేతురు',
+    '1 John': '1 యోహాను',
+    '2 John': '2 యోహాను',
+    '3 John': '3 యోహాను',
+    'Jude': 'యూదా',
+    'Revelation': 'ప్రకటన గ్రంథము',
+  };
+
 }
 
 class _BreadCard extends StatelessWidget {
@@ -720,8 +1458,10 @@ class _BibleChapter {
     final te = (map['telugu'] as Map<String, dynamic>).map(
       (k, v) => MapEntry(int.parse(k), v.toString()),
     );
+    final rawTestament = map['testament']?.toString().trim().toLowerCase() ?? 'old';
+    final normalizedTestament = rawTestament.startsWith('new') ? 'new' : 'old';
     return _BibleChapter(
-      testament: map['testament'].toString(),
+      testament: normalizedTestament,
       book: map['book'].toString(),
       chapter: (map['chapter'] as num).toInt(),
       english: en,
