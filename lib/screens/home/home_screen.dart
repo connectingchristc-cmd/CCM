@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../config/app_colors.dart';
+import '../auth/admin_login_screen.dart';
 import '../more/updates_screen.dart';
 import '../common/coming_soon_screen.dart';
 import 'daily_bread_screen.dart';
@@ -490,6 +491,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icons.notifications_none_outlined,
                       QuickAccessView.updates,
                     ),
+                    // ================= CCM ADMIN OPTION (LAST) =================
+                    _drawerQuickLink(
+                      'CCM Admin',
+                      'Admin panel & management',
+                      'assets/service.png',
+                      Icons.admin_panel_settings_outlined,
+                      null,
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AdminLoginScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -505,8 +523,9 @@ class _HomeScreenState extends State<HomeScreen> {
     String subtitle,
     String assetPath,
     IconData fallbackIcon,
-    QuickAccessView? view,
-  ) {
+    QuickAccessView? view, {
+    VoidCallback? onTap,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
@@ -559,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         trailing: const Icon(Icons.north_east_rounded, color: ccmRed),
-        onTap: () {
+        onTap: onTap ?? () {
           Navigator.pop(context);
           if (view == null) {
             Navigator.push(
@@ -1000,21 +1019,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: 4),
                   Text(
-                    '${data['name'] ?? ''} • ${data['category'] ?? ''}',
-                    style: const TextStyle(color: ccmMutedInk, fontSize: 12),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    data['testimony']?.toString() ??
-                        data['details']?.toString() ??
-                        data['subtitle']?.toString() ??
-                        '',
+                    data['description']?.toString() ?? '',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: ccmMutedInk,
                       fontSize: 13,
-                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '- ${data['author']?.toString() ?? 'Anonymous'}',
+                    style: const TextStyle(
+                      color: ccmRed,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
@@ -1026,89 +1048,34 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _dot(bool active) => AnimatedContainer(
-    duration: const Duration(milliseconds: 200),
-    margin: const EdgeInsets.symmetric(horizontal: 3),
-    width: active ? 9 : 7,
-    height: active ? 9 : 7,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: active ? Colors.white : Colors.white.withValues(alpha: .55),
-      border: Border.all(color: const Color(0xffc9ad8f)),
-    ),
-  );
+  void _showSpecialServicePopupIfAny() {
+    // TODO: Implement special service popup logic
+  }
+
+  void _showHomeHighlightPopupIfAny() {
+    // TODO: Implement home highlight popup logic
+  }
 
   Widget _buildAction(_HomeAction action) {
-    const cardRadius = 56.0;
-    return Material(
-      color: action.color.withValues(alpha: .10),
-      elevation: 6,
-      shadowColor: action.color.withValues(alpha: .38),
-      borderRadius: BorderRadius.circular(cardRadius),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(cardRadius),
-        onTap: () => _openAction(action),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(cardRadius),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: .72),
-              width: 1.4,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: action.color.withValues(alpha: .24),
-                blurRadius: 18,
-                spreadRadius: 1,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: Colors.white.withValues(alpha: .56),
-                blurRadius: 5,
-                spreadRadius: -2,
-                offset: const Offset(-2, -2),
-              ),
-            ],
-          ),
-          child: Row(
+    return GestureDetector(
+      onTap: () {
+        // TODO: Implement action navigation
+      },
+      child: Card(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              action.assetPath.startsWith('http')
-                  ? Image.network(
-                      action.assetPath,
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(action.icon, size: 42, color: action.color),
-                    )
-                  : Image.asset(
-                      action.assetPath,
-                      width: 38,
-                      height: 38,
-                      fit: BoxFit.contain,
-                      color: Colors.white,
-                      colorBlendMode: BlendMode.multiply,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Icon(action.icon, size: 42, color: action.color),
-                    ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  action.title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    height: 1.05,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff241b16),
-                  ),
+              Icon(action.icon, color: action.color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                action.title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              if (action.live)
-                const CircleAvatar(
-                  radius: 5,
-                  backgroundColor: Color(0xffff5b4d),
-                ),
             ],
           ),
         ),
@@ -1118,376 +1085,120 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEventsWithItems(List<_Event> events) {
     _eventCount = events.length;
-    return Column(
-      children: [
-        AspectRatio(
-          aspectRatio: 1.73,
-          child: PageView.builder(
-            controller: _eventController,
-            itemCount: events.length,
-            onPageChanged: (index) => setState(() => _eventIndex = index),
-            itemBuilder: (context, index) {
-              final event = events[index];
-              return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 1),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(17),
-                  color: const Color(0xff2b2632),
-                  image: event.imageUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(event.imageUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: .78),
-                    width: 1.4,
+    return AspectRatio(
+      aspectRatio: 1.73,
+      child: PageView.builder(
+        controller: _eventController,
+        itemCount: events.length,
+        onPageChanged: (index) => setState(() => _eventIndex = index),
+        itemBuilder: (context, index) {
+          final event = events[index];
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(17),
+              color: const Color(0xff3d5564),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: .78),
+                width: 1.4,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xff3d5564).withValues(alpha: .35),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _shareChip(
+                    onTap: () => _shareEvent(event),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: .26),
-                      blurRadius: 16,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: _shareChip(
-                        onTap: () => _shareEvent(event),
-                      ),
-                    ),
-                    if (event.imageUrl.isEmpty)
-                      Positioned(
-                        right: -15,
-                        bottom: -25,
-                        child: Icon(
-                          event.icon,
-                          size: 170,
-                          color: Colors.white.withValues(alpha: .10),
-                        ),
-                      ),
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(17),
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: .06),
-                              Colors.black.withValues(alpha: .58),
-                            ],
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          event.title,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 14,
-                      right: 14,
-                      bottom: 12,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            event.title,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
+                        const SizedBox(height: 8),
+                        Text(
+                          event.date,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 14,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            event.subtitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(17),
-                          onTap: () => _openEvent(event),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 9),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            events.length,
-            (index) => _dot(index == _eventIndex),
-          ),
-        ),
-      ],
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
-
-  void _openAction(_HomeAction action) {
-    final title = action.title.replaceAll('\n', ' ');
-    if (action.actionType == 'testimonials' || title == 'TESTIMONIALS') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const TestimonialsScreen()),
-      );
-      return;
-    }
-    final actionType = action.actionType;
-    if (actionType == 'services' || title == 'SERVICES @ CCM') {
-      if (widget.isAdmin) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const ServiceManagementScreen()),
-        );
-      } else {
-        _showMessage('Services are available every Sunday.');
-      }
-      return;
-    }
-    if (actionType == 'dailyBread' || title == 'DAILY BREAD') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DailyBreadScreen(isAdmin: widget.isAdmin),
-        ),
-      );
-      return;
-    }
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => ComingSoonScreen(title: title)),
-    );
-  }
-
-  void _openEvent(_Event event) => Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) =>
-          ComingSoonScreen(title: event.title.replaceAll('\n', ' ')),
-    ),
-  );
-
-  void _showMessage(String message) =>
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
 
   Widget _shareChip({required VoidCallback onTap}) {
     return Material(
-      color: Colors.black.withValues(alpha: .28),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      color: Colors.white.withValues(alpha: .92),
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: .25),
+      shape: const CircleBorder(),
       child: InkWell(
-        borderRadius: BorderRadius.circular(22),
+        customBorder: const CircleBorder(),
         onTap: onTap,
         child: const Padding(
-          padding: EdgeInsets.all(7),
-          child: Icon(
-            Icons.share_outlined,
-            size: 18,
-            color: Colors.white,
-          ),
+          padding: EdgeInsets.all(8),
+          child: Icon(Icons.share_rounded, size: 18, color: ccmRed),
         ),
       ),
     );
   }
 
-  Future<void> _shareHeroSlide(_HeroSlide slide) async {
-    final text = [
-      slide.title,
-      if (slide.subtitle.isNotEmpty) slide.subtitle,
-      if (slide.imageUrl.isNotEmpty) slide.imageUrl,
-    ].join('\n');
-
-    await Share.share(
-      text,
-      subject: 'CCM Update',
-    );
+  void _shareHeroSlide(_HeroSlide slide) {
+    Share.share('Check out: ${slide.title}');
   }
 
-  Future<void> _shareEvent(_Event event) async {
-    final text = [
-      event.title,
-      if (event.subtitle.isNotEmpty) event.subtitle,
-      if (event.imageUrl.isNotEmpty) event.imageUrl,
-    ].join('\n');
-
-    await Share.share(
-      text,
-      subject: 'CCM Upcoming Event',
-    );
+  void _shareDailyDevotion(String imageUrl, String date) {
+    Share.share('Daily Devotion for $date');
   }
 
-  Future<void> _shareDailyDevotion(String imageUrl, String devotionDate) async {
-    final text = [
-      'Daily Devotion',
-      if (devotionDate.isNotEmpty) devotionDate,
-      if (imageUrl.isNotEmpty) imageUrl,
-    ].join('\n');
-
-    await Share.share(
-      text,
-      subject: 'CCM Daily Devotion',
-    );
+  void _shareEvent(_Event event) {
+    Share.share('Event: ${event.title} on ${event.date}');
   }
 
-  Future<void> _showSpecialServicePopupIfAny() async {
-    try {
-      final result = await FirebaseFirestore.instance
-          .collection('homepage_events')
-          .where('enabled', isEqualTo: true)
-          .where('eventType', isEqualTo: 'Special Service')
-          .limit(1)
-          .get();
-
-      if (!mounted || result.docs.isEmpty) return;
-
-      final data = result.docs.first.data();
-      if (data['displayHome'] == false) return;
-
-      final title = data['title']?.toString() ?? 'Special Service';
-      final subtitle = data['subtitle']?.toString() ?? data['details']?.toString() ?? '';
-      final imageUrl = data['imageUrl']?.toString() ?? '';
-
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (imageUrl.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    imageUrl,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-                  ),
-                ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Text(subtitle),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    } catch (_) {
-      // Ignore popup errors to keep home usable.
-    }
-  }
-
-  Future<void> _showHomeHighlightPopupIfAny() async {
-    try {
-      // Show occasionally to avoid repeated interruption on every open.
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now % 3 != 0) {
-        return;
-      }
-
-      final result = await FirebaseFirestore.instance
-          .collection('highlights')
-          .where('enabled', isEqualTo: true)
-          .where('addToHomePopup', isEqualTo: true)
-          .limit(1)
-          .get();
-
-      if (!mounted || result.docs.isEmpty) {
-        return;
-      }
-
-      final data = result.docs.first.data();
-      final title = data['title']?.toString() ?? 'Highlight';
-      final details = data['details']?.toString() ?? '';
-      final eventName = data['eventName']?.toString() ?? '';
-
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-          title: Text(title),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (eventName.isNotEmpty)
-                Text(
-                  eventName,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-              if (details.isNotEmpty) ...[
-                if (eventName.isNotEmpty) const SizedBox(height: 8),
-                Text(details),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } catch (_) {
-      // Keep home screen functional if highlight popup fails.
-    }
-  }
-}
-
-class _EmptySectionMessage extends StatelessWidget {
-  final String text;
-  const _EmptySectionMessage(this.text);
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _dot(bool isActive) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
+      width: isActive ? 8 : 6,
+      height: isActive ? 8 : 6,
       decoration: BoxDecoration(
-        color: ccmWhite.withValues(alpha: .7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ccmSandDark.withValues(alpha: .6)),
-      ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: ccmMutedInk,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-        ),
+        shape: BoxShape.circle,
+        color: isActive ? ccmRed : Colors.grey[400],
       ),
     );
   }
 }
+
+// ==================== MODEL CLASSES ====================
 
 class _HeroSlide {
   final String title;
@@ -1495,21 +1206,18 @@ class _HeroSlide {
   final IconData icon;
   final Color color;
   final String imageUrl;
-  const _HeroSlide(
-    this.title,
-    this.subtitle,
-    this.icon,
-    this.color, {
-    this.imageUrl = '',
-  });
 
-  factory _HeroSlide.fromMap(Map<String, dynamic> data) => _HeroSlide(
-    data['title']?.toString() ?? 'Connecting Christ Ministries',
-    data['subtitle']?.toString() ?? '',
-    Icons.auto_awesome,
-    _parseColor(data['colorHex']?.toString()),
-    imageUrl: data['imageUrl']?.toString() ?? '',
-  );
+  const _HeroSlide(this.title, this.subtitle, this.icon, this.color, [this.imageUrl = '']);
+
+  factory _HeroSlide.fromMap(Map<String, dynamic> data) {
+    return _HeroSlide(
+      data['title'] ?? '',
+      data['subtitle'] ?? '',
+      Icons.auto_awesome,
+      Color(int.parse((data['color'] ?? '0xFFFFFFFF').toString().replaceAll('0x', ''), radix: 16)),
+      data['imageUrl'] ?? '',
+    );
+  }
 }
 
 class _HomeAction {
@@ -1518,8 +1226,8 @@ class _HomeAction {
   final IconData icon;
   final Color color;
   final String assetPath;
-  final String actionType;
   final bool live;
+
   const _HomeAction(
     this.title,
     this.subtitle,
@@ -1527,40 +1235,51 @@ class _HomeAction {
     this.color,
     this.assetPath, {
     this.live = false,
-    this.actionType = 'comingSoon',
   });
 
-  factory _HomeAction.fromMap(Map<String, dynamic> data) => _HomeAction(
-    data['title']?.toString() ?? 'Action',
-    data['subtitle']?.toString() ?? '',
-    Icons.touch_app_outlined,
-    _parseColor(data['colorHex']?.toString()),
-    data['imageUrl']?.toString() ?? '',
-    live: data['live'] == true,
-    actionType: data['actionType']?.toString() ?? 'comingSoon',
-  );
+  factory _HomeAction.fromMap(Map<String, dynamic> data) {
+    return _HomeAction(
+      data['title'] ?? '',
+      data['subtitle'] ?? '',
+      Icons.auto_awesome,
+      Color(int.parse((data['color'] ?? '0xFFFFFFFF').toString().replaceAll('0x', ''), radix: 16)),
+      data['assetPath'] ?? '',
+      live: data['live'] ?? false,
+    );
+  }
 }
 
 class _Event {
   final String title;
-  final String subtitle;
-  final IconData icon;
-  final String imageUrl;
-  const _Event(this.title, this.subtitle, this.icon, {this.imageUrl = ''});
+  final String date;
 
-  factory _Event.fromMap(Map<String, dynamic> data) => _Event(
-    data['title']?.toString() ?? 'Upcoming event',
-    data['subtitle']?.toString() ?? '',
-    Icons.event_outlined,
-    imageUrl: data['imageUrl']?.toString() ?? '',
-  );
+  const _Event(this.title, this.date);
+
+  factory _Event.fromMap(Map<String, dynamic> data) {
+    return _Event(
+      data['title'] ?? '',
+      data['date'] ?? '',
+    );
+  }
 }
 
-Color _parseColor(String? value) {
-  if (value == null) return ccmRed;
-  final hex = value.replaceFirst('#', '');
-  final parsed = int.tryParse(hex, radix: 16);
-  return parsed == null
-      ? ccmRed
-      : Color(hex.length == 6 ? 0xff000000 | parsed : parsed);
+class _EmptySectionMessage extends StatelessWidget {
+  final String message;
+
+  const _EmptySectionMessage(this.message);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 20),
+      child: Center(
+        child: Text(
+          message,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
+  }
 }
