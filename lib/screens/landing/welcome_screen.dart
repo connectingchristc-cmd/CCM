@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../../config/app_colors.dart';
-import '../auth/admin_login_screen.dart';
-import '../auth/member_login_screen.dart';
+import '../main_app.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
 
-  Future<void> _openMember(BuildContext context) async {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const MemberLoginScreen()),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    // Directly navigate to home page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const MainApp(isAdmin: false, rememberMe: false),
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: ccmSand,
       body: SafeArea(
@@ -104,24 +108,18 @@ class WelcomeScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 30),
-                          _buildButton(
-                            context,
-                            label: 'CCM Member',
-                            icon: Icons.person_outline_rounded,
-                            filled: true,
-                            onPressed: () => _openMember(context),
+                          const Center(
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(ccmRed),
+                            ),
                           ),
-                          const SizedBox(height: 12),
-                          _buildButton(
-                            context,
-                            label: 'CCM Admin',
-                            icon: Icons.admin_panel_settings_outlined,
-                            filled: false,
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const AdminLoginScreen(),
-                              ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Loading...',
+                            style: TextStyle(
+                              color: ccmMutedInk,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -165,53 +163,6 @@ class WelcomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildButton(
-    BuildContext context, {
-    required String label,
-    required IconData icon,
-    required bool filled,
-    required VoidCallback onPressed,
-  }) {
-    final style = filled
-        ? ElevatedButton.styleFrom(
-            backgroundColor: ccmRed,
-            foregroundColor: ccmWhite,
-          )
-        : OutlinedButton.styleFrom(
-            foregroundColor: ccmRed,
-            side: const BorderSide(color: ccmRed, width: 1.5),
-          );
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: filled
-          ? ElevatedButton.icon(
-              style: style,
-              onPressed: onPressed,
-              icon: Icon(icon),
-              label: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            )
-          : OutlinedButton.icon(
-              style: style,
-              onPressed: onPressed,
-              icon: Icon(icon),
-              label: Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
     );
   }
 
