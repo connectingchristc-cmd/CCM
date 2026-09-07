@@ -182,17 +182,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildHomeTopHeader() {
     final user = FirebaseAuth.instance.currentUser;
-    final isPasswordUser =
-      user?.providerData.any((p) => p.providerId == 'password') ?? false;
-    final shouldUseFirebaseProfile =
-      widget.isAdmin || (!isPasswordUser && _localMemberName.isEmpty);
-
-    final userStream = (user == null || !shouldUseFirebaseProfile)
+    final userStream = user == null
       ? const Stream<DocumentSnapshot<Map<String, dynamic>>>.empty()
       : FirebaseFirestore.instance
-        .collection(widget.isAdmin ? 'admins' : 'users')
-        .doc(user.uid)
-        .snapshots();
+          .collection(widget.isAdmin ? 'admins' : 'users')
+          .doc(user.uid)
+          .snapshots();
 
     return Container(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -243,14 +238,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   .trim();
                 final fallbackEmail = user?.email?.split('@').first.trim() ?? '';
                 final fullName = [
-                  if (!widget.isAdmin) _localMemberName,
-                  if (shouldUseFirebaseProfile) data['fullName'],
-                  if (shouldUseFirebaseProfile) data['name'],
-                  if (shouldUseFirebaseProfile) profileName,
-                  if (widget.isAdmin) user?.displayName,
+                  data['fullName'],
+                  data['name'],
+                  profileName,
+                  user?.displayName,
                   if (widget.isAdmin) _titleCaseName(fallbackEmail),
-                  if (shouldUseFirebaseProfile)
-                    user?.phoneNumber?.replaceFirst('+91', ''),
+                  user?.phoneNumber?.replaceFirst('+91', ''),
                 ]
                     .map((value) => value?.toString().trim() ?? '')
                     .firstWhere((value) => value.isNotEmpty, orElse: () => 'MEMBER');
