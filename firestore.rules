@@ -97,17 +97,20 @@ service cloud.firestore {
 
     // Homepage content: members see enabled content; admins manage everything.
     match /homepage_hero_slides/{slideId} {
-      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow read: if (request.auth == null && resource.data.enabled != false) ||
+        (isMember() && (resource.data.enabled == true || isAdmin()));
       allow write: if isAdmin();
     }
 
     match /homepage_events/{eventId} {
-      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow read: if (request.auth == null && resource.data.enabled != false) ||
+        (isMember() && (resource.data.enabled == true || isAdmin()));
       allow write: if isAdmin();
     }
 
     match /homepage_action_cards/{cardId} {
-      allow read: if isMember() && (resource.data.enabled == true || isAdmin());
+      allow read: if (request.auth == null && resource.data.enabled != false) ||
+        (isMember() && (resource.data.enabled == true || isAdmin()));
       allow write: if isAdmin();
     }
 

@@ -7,6 +7,7 @@ class LyricViewScreen extends StatefulWidget {
   final String songId;
   final List<Map<String, dynamic>>? playlist;
   final int? currentIndex;
+  final int? paletteIndex;
 
   const LyricViewScreen({
     super.key,
@@ -14,6 +15,7 @@ class LyricViewScreen extends StatefulWidget {
     required this.song,
     this.playlist,
     this.currentIndex,
+    this.paletteIndex,
   });
 
   @override
@@ -27,9 +29,70 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
 
   late Map<String, dynamic> _currentSong;
 
-  late String _currentSongId;
-
   int? _currentIndex;
+
+  static const List<_LyricPalette> _palettes = [
+    _LyricPalette(
+      border: Color(0xFFF2A8B9),
+      glow: Color(0x66F2A8B9),
+      appBarTop: Color(0xFFF7C3D1),
+      appBarBottom: Color(0xFFED9CB3),
+      bodyTop: Color(0xFFFFEAF1),
+      bodyBottom: Color(0xFFFFD8E5),
+      accent: Color(0xFF3F2332),
+      text: Color(0xFF23161C),
+    ),
+    _LyricPalette(
+      border: Color(0xFFF2C67D),
+      glow: Color(0x66F2C67D),
+      appBarTop: Color(0xFFF5DAB2),
+      appBarBottom: Color(0xFFF0C267),
+      bodyTop: Color(0xFFFFF1D8),
+      bodyBottom: Color(0xFFF9E3B8),
+      accent: Color(0xFF513B1C),
+      text: Color(0xFF2A2014),
+    ),
+    _LyricPalette(
+      border: Color(0xFFEDAE8A),
+      glow: Color(0x66EDAE8A),
+      appBarTop: Color(0xFFF6D0B6),
+      appBarBottom: Color(0xFFF0AE7A),
+      bodyTop: Color(0xFFFFF0E8),
+      bodyBottom: Color(0xFFF9D8C0),
+      accent: Color(0xFF4B3124),
+      text: Color(0xFF251A17),
+    ),
+    _LyricPalette(
+      border: Color(0xFFC9D978),
+      glow: Color(0x66C9D978),
+      appBarTop: Color(0xFFE7F0AF),
+      appBarBottom: Color(0xFFCCD978),
+      bodyTop: Color(0xFFF4F9D9),
+      bodyBottom: Color(0xFFE5F0B0),
+      accent: Color(0xFF344022),
+      text: Color(0xFF1C2611),
+    ),
+    _LyricPalette(
+      border: Color(0xFFE1A9C2),
+      glow: Color(0x66E1A9C2),
+      appBarTop: Color(0xFFF5D1E2),
+      appBarBottom: Color(0xFFDF9BB8),
+      bodyTop: Color(0xFFFFEEF7),
+      bodyBottom: Color(0xFFFAE1EE),
+      accent: Color(0xFF4A2E3E),
+      text: Color(0xFF2D1D28),
+    ),
+    _LyricPalette(
+      border: Color(0xFF94BFF0),
+      glow: Color(0x6694BFF0),
+      appBarTop: Color(0xFFD8EAFF),
+      appBarBottom: Color(0xFF8EBAF1),
+      bodyTop: Color(0xFFEAF4FF),
+      bodyBottom: Color(0xFFCFE7FF),
+      accent: Color(0xFF1F3652),
+      text: Color(0xFF182330),
+    ),
+  ];
 
   static const _chordNames = <String>[
     'C',
@@ -51,7 +114,6 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
     super.initState();
 
     _currentSong = widget.song;
-    _currentSongId = widget.songId;
     _currentIndex = widget.currentIndex;
   }
 
@@ -110,16 +172,21 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
 
         _currentSong = nextSong;
 
-        _currentSongId = nextSong['id']?.toString() ?? '';
-
         _transpose = 0;
       });
     }
   }
 
+  _LyricPalette get _palette {
+    final paletteIndex = widget.paletteIndex ??
+        (widget.songId.hashCode.abs() % _palettes.length);
+    return _palettes[paletteIndex % _palettes.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasPlaylist = widget.playlist != null && widget.playlist!.length > 1;
+    final palette = _palette;
 
     final canGoPrevious = hasPlaylist && (_currentIndex ?? 0) > 0;
 
@@ -138,19 +205,23 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
               _currentSong['title_telugu'] ?? 'Lyrics',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: palette.accent,
+              ),
             ),
             Text(
               _currentSong['title_english'] ?? '',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12),
+              style: TextStyle(fontSize: 12, color: palette.accent.withValues(alpha: 0.8)),
             ),
           ],
         ),
 
-        backgroundColor: ccmSandDark,
-        foregroundColor: ccmInk,
+        backgroundColor: palette.appBarTop,
+        foregroundColor: palette.accent,
 
         actions: [
           if (hasPlaylist) ...[
@@ -198,7 +269,7 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [ccmSandDark.withValues(alpha: 0.35), ccmSand],
+            colors: [palette.bodyTop, palette.bodyBottom],
           ),
         ),
 
@@ -213,10 +284,10 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
                 _currentSong['title_telugu'] ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1a1a1a),
+                  color: palette.text,
                 ),
               ),
 
@@ -226,9 +297,9 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
                 _currentSong['title_english'] ?? '',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF404040),
+                  color: palette.accent.withValues(alpha: 0.8),
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -315,8 +386,8 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
       ),
 
       floatingActionButton: FloatingActionButton(
-        backgroundColor: ccmSandDark,
-        foregroundColor: ccmInk,
+        backgroundColor: palette.appBarBottom,
+        foregroundColor: palette.accent,
 
         onPressed: () {
           Navigator.pop(context);
@@ -328,4 +399,26 @@ class _LyricViewScreenState extends State<LyricViewScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
+}
+
+class _LyricPalette {
+  final Color border;
+  final Color glow;
+  final Color appBarTop;
+  final Color appBarBottom;
+  final Color bodyTop;
+  final Color bodyBottom;
+  final Color accent;
+  final Color text;
+
+  const _LyricPalette({
+    required this.border,
+    required this.glow,
+    required this.appBarTop,
+    required this.appBarBottom,
+    required this.bodyTop,
+    required this.bodyBottom,
+    required this.accent,
+    required this.text,
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -20,7 +21,27 @@ class SongsScreen extends StatefulWidget {
 
 class _SongsScreenState extends State<SongsScreen> {
   String _searchQuery = '';
-  bool _favoritesOnly = false;
+  String _selectedCategory = '';
+  final bool _favoritesOnly = false;
+  bool _effectiveIsAdmin = false;
+
+  final TextEditingController _searchController = TextEditingController();
+
+  static const List<String> _songCategories = [
+    'Praise',
+    'Worship',
+    'Gospel',
+    'Thanksgiving',
+    'Prayer',
+    'Confession / Repentance',
+    'Holy Communion',
+    'Wedding',
+    'Christmas',
+    'Good Friday',
+    'Resurrection',
+    'Sunday School',
+    'Action Songs',
+  ];
 
   static const List<_GlowPalette> _songCardPalette = [
     _GlowPalette(
@@ -68,7 +89,116 @@ class _SongsScreenState extends State<SongsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _effectiveIsAdmin = widget.isAdmin;
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      _refreshAdminStatus();
+    });
+    _refreshAdminStatus();
+  }
+
+  @override
+  void didUpdateWidget(covariant SongsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isAdmin != widget.isAdmin) {
+      _effectiveIsAdmin = widget.isAdmin;
+      _refreshAdminStatus();
+    }
+  }
+
+  Future<void> _refreshAdminStatus() async {
+    if (widget.isAdmin) {
+      if (mounted) {
+        setState(() => _effectiveIsAdmin = true);
+      }
+      return;
+    }
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) {
+        setState(() => _effectiveIsAdmin = false);
+      }
+      return;
+    }
+
+    try {
+      final token = await user.getIdTokenResult(true);
+      final hasCustomClaimAdmin = token.claims?['admin'] == true;
+
+      if (hasCustomClaimAdmin) {
+        if (mounted) {
+          setState(() => _effectiveIsAdmin = true);
+        }
+        return;
+      }
+
+      final adminDoc = await FirebaseFirestore.instance
+          .collection('admins')
+          .doc(user.uid)
+          .get();
+
+      if (adminDoc.exists) {
+        if (mounted) {
+          setState(() => _effectiveIsAdmin = true);
+        }
+        return;
+      }
+
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final data = userDoc.data();
+      final isAdminUser =
+          data?['role'] == 'admin' || data?['isAdmin'] == true;
+
+      if (mounted) {
+        setState(() => _effectiveIsAdmin = isAdminUser);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _effectiveIsAdmin = false);
+      }
+    }
+  }
+
+  void _clearSearchState() {
+    _searchController.clear();
+    setState(() {
+      _searchQuery = '';
+      _selectedCategory = '';
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSongFilters(Map<String, dynamic> song) {
+    final eng = (song['title_english'] ?? '').toString().toLowerCase();
+    final tel = (song['title_telugu'] ?? '').toString().toLowerCase();
+    final lyrics = (song['lyrics'] ?? '').toString().toLowerCase();
+    final category = (song['category'] ?? '').toString();
+    final matchesCategory =
+        _selectedCategory.isEmpty || category == _selectedCategory;
+    final matchesSearch =
+        eng.contains(_searchQuery) || tel.contains(_searchQuery) || lyrics.contains(_searchQuery);
+
+    return matchesCategory &&
+        matchesSearch &&
+        (!_favoritesOnly || appFeatureStore.isFavorite(song['id'].toString()));
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final showAddButton = widget.isAdmin || _effectiveIsAdmin;
+
     return Scaffold(
       backgroundColor: const Color(0xFF060B1D),
       body: AnimatedBuilder(
@@ -112,19 +242,8 @@ class _SongsScreenState extends State<SongsScreen> {
                               }
 
                               final filtered = docs.where((doc) {
-                                final data = doc.data();
-                                final eng =
-                                    (data['title_english'] ?? '').toString().toLowerCase();
-                                final tel =
-                                    (data['title_telugu'] ?? '').toString().toLowerCase();
-                                final lyrics =
-                                    (data['lyrics'] ?? '').toString().toLowerCase();
-
-                                return (eng.contains(_searchQuery) ||
-                                        tel.contains(_searchQuery) ||
-                                        lyrics.contains(_searchQuery)) &&
-                                    (!_favoritesOnly ||
-                                        appFeatureStore.isFavorite(doc.id));
+                                final data = {'id': doc.id, ...doc.data()};
+                                return _matchesSongFilters(data);
                               }).toList();
 
                               final songList = filtered
@@ -161,7 +280,7 @@ class _SongsScreenState extends State<SongsScreen> {
           );
         },
       ),
-      floatingActionButton: widget.isAdmin
+      floatingActionButton: showAddButton
           ? FloatingActionButton.extended(
               backgroundColor: ccmRed,
               foregroundColor: ccmWhite,
@@ -201,9 +320,9 @@ class _SongsScreenState extends State<SongsScreen> {
       child: Column(
         children: [
           Container(
-            height: 104,
+            height: 82,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -224,7 +343,7 @@ class _SongsScreenState extends State<SongsScreen> {
                   top: -24,
                   child: Icon(
                     Icons.auto_awesome,
-                    size: 58,
+                    size: 54,
                     color: const Color(0xFFFFD67A).withValues(alpha: 0.34),
                   ),
                 ),
@@ -233,7 +352,7 @@ class _SongsScreenState extends State<SongsScreen> {
                   bottom: -12,
                   child: Icon(
                     Icons.music_note_rounded,
-                    size: 70,
+                    size: 62,
                     color: const Color(0xFFFFD67A).withValues(alpha: 0.18),
                   ),
                 ),
@@ -243,7 +362,7 @@ class _SongsScreenState extends State<SongsScreen> {
                       'Songs',
                       style: GoogleFonts.cinzelDecorative(
                         color: const Color(0xFFFFC85A),
-                        fontSize: 42,
+                        fontSize: 24,
                         fontWeight: FontWeight.w800,
                         shadows: const [
                           Shadow(
@@ -258,30 +377,48 @@ class _SongsScreenState extends State<SongsScreen> {
                   ),
                 ),
                 Positioned(
-                  top: 12,
-                  right: 12,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _favoritesOnly = !_favoritesOnly;
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Padding(
-                        padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        _favoritesOnly ? Icons.favorite : Icons.favorite_border,
-                        color: const Color(0xFFEED89B),
-                          size: 24,
-                      ),
-                    ),
-                  ),
+                  top: 10,
+                  right: 10,
+                  child: _buildCategoryFilterButton(),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _buildSearchBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilterButton() {
+    return Container(
+      width: 30,
+      height: 30,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A294B).withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(
+          color: const Color(0xFFEED89B).withValues(alpha: 0.65),
+        ),
+      ),
+      child: PopupMenuButton<String>(
+        tooltip: 'Filter by category',
+        padding: EdgeInsets.zero,
+        icon: const Icon(Icons.filter_list_rounded, size: 18, color: Color(0xFFEED89B)),
+        onSelected: (value) {
+          setState(() {
+            _selectedCategory = value;
+          });
+        },
+        itemBuilder: (context) => [
+          const PopupMenuItem<String>(value: '', child: Text('All Categories')),
+          ..._songCategories.map(
+            (category) => PopupMenuItem<String>(
+              value: category,
+              child: Text(category),
+            ),
+          ),
         ],
       ),
     );
@@ -289,8 +426,9 @@ class _SongsScreenState extends State<SongsScreen> {
 
   Widget _buildSearchBar() {
     return Container(
+      height: 46,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.42),
           width: 1.1,
@@ -313,8 +451,8 @@ class _SongsScreenState extends State<SongsScreen> {
         children: [
           const SizedBox(width: 10),
           Container(
-            width: 46,
-            height: 46,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: const RadialGradient(
@@ -327,17 +465,37 @@ class _SongsScreenState extends State<SongsScreen> {
                 ),
               ],
             ),
-            child: const Icon(Icons.search, color: Color(0xFF2C1C06)),
+            child: const Icon(Icons.search, color: Color(0xFFB7BDD4), size: 18),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: TextField(
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Search songs (Telugu or English)...',
-                hintStyle: TextStyle(color: Color(0xFFB7BDD4), fontSize: 17),
+              controller: _searchController,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+              cursorColor: const Color(0xFFB7BDD4),
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: _selectedCategory.isEmpty
+                    ? 'Search songs (Telugu or English)...'
+                    : 'Search in $_selectedCategory',
+                hintStyle: const TextStyle(
+                  color: Color(0xFFB7BDD4),
+                  fontSize: 13.5,
+                ),
                 border: InputBorder.none,
                 filled: false,
+                isDense: true,
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        splashRadius: 16,
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.clear, color: Color(0xFFB7BDD4), size: 18),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
               ),
               onChanged: (value) {
                 setState(() {
@@ -346,7 +504,7 @@ class _SongsScreenState extends State<SongsScreen> {
               },
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
         ],
       ),
     );
@@ -362,7 +520,7 @@ class _SongsScreenState extends State<SongsScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
           child: _buildCountChip(count, favoritesFiltered),
         ),
         Expanded(
@@ -388,9 +546,9 @@ class _SongsScreenState extends State<SongsScreen> {
 
   Widget _buildCountChip(int count, bool favoritesFiltered) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFF3D27A).withValues(alpha: 0.72)),
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
@@ -408,36 +566,30 @@ class _SongsScreenState extends State<SongsScreen> {
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 28,
+            height: 28,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
               gradient:
                   RadialGradient(colors: [Color(0xFFF9DA84), Color(0xFF684B16)]),
             ),
-            child: const Icon(Icons.music_note_rounded, color: Colors.white),
+            child: const Icon(Icons.music_note_rounded, color: Colors.white, size: 14),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Text(
             'Total Songs: $count',
             style: const TextStyle(
               color: Color(0xFFF4E1B0),
               fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: 14,
             ),
           ),
           const Spacer(),
           if (favoritesFiltered)
             const Text(
               'Favorites',
-              style: TextStyle(color: Color(0xFFD8BCD0), fontSize: 12),
+              style: TextStyle(color: Color(0xFFD8BCD0), fontSize: 10),
             ),
-          const SizedBox(width: 8),
-          Icon(
-            Icons.equalizer_rounded,
-            color: const Color(0xFFECC764).withValues(alpha: 0.95),
-            size: 29,
-          ),
         ],
       ),
     );
@@ -445,13 +597,8 @@ class _SongsScreenState extends State<SongsScreen> {
 
   Widget _buildCachedSongs() {
     final cached = appFeatureStore.cachedSongs.values.where((song) {
-      final query = _searchQuery;
-      final eng = (song['title_english'] ?? '').toString().toLowerCase();
-      final tel = (song['title_telugu'] ?? '').toString().toLowerCase();
-      final lyrics = (song['lyrics'] ?? '').toString().toLowerCase();
-
-      return (eng.contains(query) || tel.contains(query) || lyrics.contains(query)) &&
-          (!_favoritesOnly || appFeatureStore.isFavorite(song['id'].toString()));
+      final data = {'id': song['id'].toString(), ...song};
+      return _matchesSongFilters(data);
     }).toList();
 
     return _buildSongList(
@@ -560,16 +707,15 @@ class _SongsScreenState extends State<SongsScreen> {
                 fontStyle: FontStyle.italic,
               ),
             ),
-            trailing: Icon(
-              appFeatureStore.isFavorite(songId)
-                  ? Icons.favorite
-                  : Icons.chevron_right_rounded,
-              color:
-                  appFeatureStore.isFavorite(songId) ? const Color(0xFFB6386A) : const Color(0xFF3E3251),
+            trailing: const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF3E3251),
               size: 26,
             ),
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              _clearSearchState();
+
+              await Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => LyricViewScreen(
@@ -577,9 +723,16 @@ class _SongsScreenState extends State<SongsScreen> {
                     song: song,
                     playlist: playlist,
                     currentIndex: currentIndex,
+                    paletteIndex: currentIndex % _songCardPalette.length,
                   ),
                 ),
               );
+
+              if (!mounted) {
+                return;
+              }
+
+              _clearSearchState();
             },
             onLongPress: widget.isAdmin
                 ? () => _showSongOptions(

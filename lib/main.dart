@@ -3641,18 +3641,56 @@
 //   }
 // }
 
+// import 'package:firebase_core/firebase_core.dart';
+// import 'package:flutter/material.dart';
+
+// import 'config/app_colors.dart';
+// import 'config/firebase_options.dart';
+// import 'core/app_feature_store.dart';
+// import 'screens/landing/welcome_screen.dart';
+
+// Future<void> main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+
+//   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+//   await appFeatureStore.load();
+
+//   runApp(const CCMApp());
+// }
+
+// class CCMApp extends StatelessWidget {
+//   const CCMApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       title: 'CCM',
+//       theme: buildCcmTheme(),
+//       home: const WelcomeScreen(),
+//     );
+//   }
+// }
+
+
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'config/app_colors.dart';
 import 'config/firebase_options.dart';
 import 'core/app_feature_store.dart';
-import 'screens/landing/welcome_screen.dart';
+import 'screens/main_app.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
 
   await appFeatureStore.load();
 
@@ -3668,7 +3706,7 @@ class CCMApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'CCM',
       theme: buildCcmTheme(),
-      home: const WelcomeScreen(),
+  home: const MainApp(isAdmin: false, rememberMe: false),
     );
   }
 }
